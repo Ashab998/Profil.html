@@ -7,72 +7,281 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --primary: #2980b9; --secondary: #34495e; --bg: #f4f7f6; --card: #ffffff;
-            --text: #2c3e50; --muted: #7f8c8d; --green: #27ae60; --red: #e74c3c;
-            --gold: #f39c12; --purple: #8e44ad; --glass: rgba(255, 255, 255, 0.95);
+            --primary: #2980b9; 
+            --secondary: #34495e; 
+            --bg: #f4f7f6; 
+            --card: #ffffff;
+            --text: #2c3e50; 
+            --muted: #7f8c8d; 
+            --green: #27ae60; 
+            --red: #e74c3c;
+            --gold: #f39c12; 
+            --purple: #8e44ad; 
         }
 
-        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; padding-top: 10px; -webkit-user-select: none; user-select: none; }
-        input, select, textarea { -webkit-user-select: auto; user-select: auto; }
+        * { 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+        }
+        
+        body { 
+            margin: 0; 
+            background: var(--bg); 
+            color: var(--text); 
+            padding-bottom: 80px; 
+            padding-top: 10px; 
+            -webkit-user-select: none; 
+            user-select: none; 
+        }
+        
+        input, select, textarea { 
+            -webkit-user-select: auto; 
+            user-select: auto; 
+        }
 
-        /* Верхняя панель (Часы и Управление) */
+        /* Верхняя панель (Часы, Приватность, Настройки) */
         .top-panel {
-            position: fixed; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 2500;
+            position: fixed; 
+            top: 15px; 
+            right: 15px; 
+            display: flex; 
+            gap: 8px; 
+            z-index: 2500;
         }
+
         .system-clock {
-            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
-            padding: 4px 10px; border-radius: 20px; font-family: 'Courier New', monospace; font-weight: bold;
-            color: rgba(41, 128, 185, 0.6); box-shadow: 0 1px 5px rgba(0,0,0,0.05);
-            border: 1px solid rgba(41, 128, 185, 0.1); font-size: 0.85rem; pointer-events: none; 
+            background: rgba(255, 255, 255, 0.15); 
+            backdrop-filter: blur(3px); 
+            -webkit-backdrop-filter: blur(3px);
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            font-family: 'Courier New', monospace; 
+            font-weight: bold;
+            color: rgba(41, 128, 185, 0.8); 
+            box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+            border: 1px solid rgba(41, 128, 185, 0.1); 
+            font-size: 0.85rem; 
+            pointer-events: none; 
+            display: flex; 
+            align-items: center;
         }
+
         .top-btn {
-            background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(3px); border-radius: 50%;
-            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
-            font-size: 1rem; cursor: pointer; border: 1px solid rgba(41, 128, 185, 0.2); box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+            background: rgba(255, 255, 255, 0.6); 
+            backdrop-filter: blur(3px); 
+            border-radius: 50%;
+            width: 34px; 
+            height: 34px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-size: 1.1rem; 
+            cursor: pointer; 
+            border: 1px solid rgba(41, 128, 185, 0.2); 
+            box-shadow: 0 1px 5px rgba(0,0,0,0.05);
         }
 
         .bottom-nav {
-            position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 15px rgba(0,0,0,0.05); z-index: 1000;
+            position: fixed; 
+            bottom: 0; 
+            width: 100%; 
+            background: var(--card); 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 8px 0; 
+            box-shadow: 0 -2px 15px rgba(0,0,0,0.05); 
+            z-index: 1000;
         }
+
         .nav-item {
-            flex: 1; text-align: center; color: var(--muted); cursor: pointer; font-size: 0.75rem; font-weight: 600; padding: 5px 0; transition: 0.3s;
+            flex: 1; 
+            text-align: center; 
+            color: var(--muted); 
+            cursor: pointer; 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            padding: 5px 0; 
+            transition: 0.3s;
         }
-        .nav-item .icon { font-size: 1.3rem; display: block; margin-bottom: 2px; }
-        .nav-item.active { color: var(--primary); transform: translateY(-3px); }
 
-        .tab-content { display: none; padding: 15px; max-width: 600px; margin: 0 auto; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-item .icon { 
+            font-size: 1.3rem; 
+            display: block; 
+            margin-bottom: 2px; 
+        }
 
-        .card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        h2 { margin: 0 0 15px 0; font-size: 1.1rem; color: var(--secondary); border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .nav-item.active { 
+            color: var(--primary); 
+            transform: translateY(-3px); 
+        }
 
-        .profile-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .name { font-size: 1.6rem; font-weight: bold; color: var(--primary); }
-        .title { font-size: 0.9rem; color: var(--gold); font-weight: bold; }
-        .params { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--muted); background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
-        .bar-bg { width: 100%; height: 12px; background: #ecf0f1; border-radius: 6px; overflow: hidden; margin-top: 5px; }
-        .bar-fill { height: 100%; background: linear-gradient(90deg, #3498db, #2980b9); transition: width 0.4s ease; }
+        .tab-content { 
+            display: none; 
+            padding: 15px; 
+            max-width: 600px; 
+            margin: 0 auto; 
+        }
 
-        input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #dfe6e9; border-radius: 8px; font-size: 1rem; background: #fafafa; }
-        input[type="range"] { padding: 0; }
-        input:focus { outline: none; border-color: var(--primary); }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--primary); color: white; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; }
-        button:active { transform: scale(0.98); }
-        .btn-green { background: var(--green); } .btn-gold { background: var(--gold); } .btn-gray { background: var(--muted); }
-        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
-        .edit-btn { background: transparent; color: var(--primary); padding: 0; width: auto; font-size: 1.2rem; cursor: pointer; border: none; }
+        .tab-content.active { 
+            display: block; 
+            animation: fadeIn 0.3s; 
+        }
 
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .stat-box { background: #f8f9fa; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #eee; }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(5px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        .card { 
+            background: var(--card); 
+            border-radius: 16px; 
+            padding: 20px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+        }
+
+        h2 { 
+            margin: 0 0 15px 0; 
+            font-size: 1.1rem; 
+            color: var(--secondary); 
+            border-bottom: 1px solid #eee; 
+            padding-bottom: 8px; 
+        }
+
+        .profile-head { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 10px; 
+        }
+
+        .name { 
+            font-size: 1.6rem; 
+            font-weight: bold; 
+            color: var(--primary); 
+        }
+
+        .title { 
+            font-size: 0.9rem; 
+            color: var(--gold); 
+            font-weight: bold; 
+        }
+
+        .params { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 0.85rem; 
+            color: var(--muted); 
+            background: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 8px; 
+            margin-bottom: 15px; 
+        }
+
+        .bar-bg { 
+            width: 100%; 
+            height: 12px; 
+            background: #ecf0f1; 
+            border-radius: 6px; 
+            overflow: hidden; 
+            margin-top: 5px; 
+        }
+
+        .bar-fill { 
+            height: 100%; 
+            background: linear-gradient(90deg, #3498db, #2980b9); 
+            transition: width 0.4s ease; 
+        }
+
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            margin-bottom: 12px; 
+            border: 1px solid #dfe6e9; 
+            border-radius: 8px; 
+            font-size: 1rem; 
+            background: #fafafa; 
+        }
+
+        input[type="range"] { 
+            padding: 0; 
+        }
+
+        input:focus { 
+            outline: none; 
+            border-color: var(--primary); 
+        }
+
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            border: none; 
+            border-radius: 8px; 
+            background: var(--primary); 
+            color: white; 
+            font-weight: bold; 
+            font-size: 1rem; 
+            cursor: pointer; 
+            transition: 0.2s; 
+        }
+
+        button:active { 
+            transform: scale(0.98); 
+        }
+
+        .btn-green { background: var(--green); } 
+        .btn-gold { background: var(--gold); } 
+        .btn-gray { background: var(--muted); }
+        
+        .btn-outline { 
+            background: transparent; 
+            border: 1px solid var(--primary); 
+            color: var(--primary); 
+        }
+
+        .edit-btn { 
+            background: transparent; 
+            color: var(--primary); 
+            padding: 0; 
+            width: auto; 
+            font-size: 1.2rem; 
+            cursor: pointer; 
+            border: none; 
+        }
+
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+        }
+
+        .stat-box { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 12px; 
+            text-align: center; 
+            border: 1px solid #eee; 
+        }
+
         .stat-icon { font-size: 1.5rem; margin-bottom: 5px; }
         .stat-name { font-weight: bold; font-size: 0.9rem; margin-bottom: 5px; }
         .stat-hours { color: var(--primary); font-weight: bold; font-size: 1.1rem; }
 
-        .list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; background: #fafafa; border-radius: 8px; margin-bottom: 8px;}
+        .list-item { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 12px; 
+            border-bottom: 1px solid #eee; 
+            background: #fafafa; 
+            border-radius: 8px; 
+            margin-bottom: 8px;
+        }
+
         .item-info { flex: 1; }
-        .done { opacity: 0.6; background: #f0f0f0; } .done span { text-decoration: line-through; color: var(--muted); }
+        .done { opacity: 0.6; background: #f0f0f0; } 
+        .done span { text-decoration: line-through; color: var(--muted); }
 
         .wallets { display: flex; gap: 10px; margin-bottom: 15px; }
         .wallet { flex: 1; padding: 15px; border-radius: 12px; color: white; text-align: center; overflow: hidden; }
@@ -80,28 +289,140 @@
         .w-resell { background: linear-gradient(135deg, #8e44ad, #9b59b6); }
         .w-amount { font-size: 1.3rem; font-weight: bold; margin-top: 5px; }
 
-        .analytics-box { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
-        .analytics-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; align-items: center; }
-        .text-green { color: var(--green); font-weight: bold; } .text-red { color: var(--red); font-weight: bold; }
-        .text-purple { color: var(--purple); font-weight: bold; }
-        .net-worth-box { background: linear-gradient(135deg, #16a085, #2ecc71); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);}
-        .net-worth-amount { font-size: 2rem; font-weight: bold; margin-top: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .analytics-box { 
+            background: #f8f9fa; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 8px; 
+            padding: 12px; 
+            margin-bottom: 15px; 
+        }
 
-        .filters { display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 5px; }
-        .filter-btn { flex: 1; padding: 8px; font-size: 0.8rem; background: #eee; color: var(--text); border-radius: 20px; white-space: nowrap; }
-        .filter-btn.active { background: var(--primary); color: white; }
-        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-        .h-info { flex: 1; } .h-date { font-size: 0.75rem; color: var(--muted); margin-top:3px;}
-        .h-val { font-weight: bold; margin-right: 10px; text-align: right;}
-        .val-plus { color: var(--green); } .val-minus { color: var(--red); }
+        .analytics-row { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 8px; 
+            font-size: 0.9rem; 
+            align-items: center; 
+        }
+
+        .text-green { color: var(--green); font-weight: bold; } 
+        .text-red { color: var(--red); font-weight: bold; }
+        .text-purple { color: var(--purple); font-weight: bold; }
+
+        .net-worth-box { 
+            background: linear-gradient(135deg, #16a085, #2ecc71); 
+            color: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            text-align: center; 
+            margin-bottom: 15px; 
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .net-worth-amount { 
+            font-size: 2rem; 
+            font-weight: bold; 
+            margin-top: 5px; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+        }
+
+        .filters { 
+            display: flex; 
+            gap: 5px; 
+            margin-bottom: 15px; 
+            overflow-x: auto; 
+            padding-bottom: 5px; 
+        }
+
+        .filter-btn { 
+            flex: 1; 
+            padding: 8px; 
+            font-size: 0.8rem; 
+            background: #eee; 
+            color: var(--text); 
+            border-radius: 20px; 
+            white-space: nowrap; 
+        }
+
+        .filter-btn.active { 
+            background: var(--primary); 
+            color: white; 
+        }
+
+        .history-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 12px 0; 
+            border-bottom: 1px solid #eee; 
+            font-size: 0.9rem; 
+        }
+
+        .h-info { flex: 1; } 
+        .h-date { font-size: 0.75rem; color: var(--muted); margin-top:3px; }
+        .h-val { font-weight: bold; margin-right: 10px; text-align: right; }
+        .val-plus { color: var(--green); } 
+        .val-minus { color: var(--red); }
         .h-zero { opacity: 0.5; }
 
-        .search-box { width: 100%; padding: 10px 15px; border-radius: 20px; border: 1px solid #ddd; background: #f8f9fa; font-size: 0.9rem; margin-bottom: 15px; }
-        .search-stats { background: rgba(41, 128, 185, 0.05); padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px; border-left: 3px solid var(--primary); }
+        .search-box { 
+            width: 100%; 
+            padding: 12px 15px; 
+            border-radius: 12px; 
+            border: 1px solid #dfe6e9; 
+            background: #fafafa; 
+            font-size: 1rem; 
+            margin-bottom: 15px; 
+            box-sizing: border-box;
+        }
 
-        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index: 3000; display: flex; align-items: center; justify-content: center; }
-        .modal { background: white; padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto;}
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--secondary); color: white; padding: 12px 24px; border-radius: 30px; z-index: 4000; font-weight: bold; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center;}
+        .search-stats { 
+            background: rgba(41, 128, 185, 0.05); 
+            padding: 15px; 
+            border-radius: 12px; 
+            font-size: 0.9rem; 
+            margin-bottom: 15px; 
+            border-left: 4px solid var(--primary); 
+        }
+
+        .modal-overlay { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.8); 
+            z-index: 3000; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+
+        .modal { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 16px; 
+            width: 90%; 
+            max-width: 400px; 
+            max-height: 90vh; 
+            overflow-y: auto;
+        }
+
+        #toast { 
+            position: fixed; 
+            top: 20px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: var(--secondary); 
+            color: white; 
+            padding: 12px 24px; 
+            border-radius: 30px; 
+            z-index: 4000; 
+            font-weight: bold; 
+            display: none; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -129,6 +450,9 @@
 
         <div style="border-top: 1px solid #eee; padding-top: 15px;">
             <div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 10px;">Резервное копирование</div>
+            <p style="font-size: 0.75rem; color: var(--muted); margin-top: 0; margin-bottom: 10px; line-height: 1.4;">
+                Данные хранятся только на этом устройстве. Скачивайте бэкап, чтобы не потерять прогресс при удалении.
+            </p>
             <div style="display: flex; gap: 10px;">
                 <button onclick="exportData()" style="flex: 1; background: var(--secondary); font-size: 0.85rem; padding: 10px;">Скачать</button>
                 <label for="import-file" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem; border: 1px solid var(--secondary); color: var(--secondary); box-sizing: border-box;">Загрузить</label>
@@ -143,13 +467,20 @@
 <div id="tab-hero" class="tab-content active">
     <div class="card" style="margin-top: 20px;">
         <div class="profile-head">
-            <div><div class="name" id="ui-name">Игрок</div><div class="title" id="ui-title">Ранг: E</div></div>
-            <div style="text-align: right;"><div style="font-size: 1.4rem; font-weight: bold; color: var(--primary);">LVL <span id="ui-lvl">1</span></div></div>
+            <div>
+                <div class="name" id="ui-name">Игрок</div>
+                <div class="title" id="ui-title">Ранг: E</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 1.4rem; font-weight: bold; color: var(--primary);">LVL <span id="ui-lvl">1</span></div>
+            </div>
         </div>
         <div class="params">
             <div><span id="ui-age">25</span> лет | <span id="ui-height">180</span> см | <span id="ui-weight">75</span> кг</div>
         </div>
-        <div class="bar-bg"><div class="bar-fill" id="ui-exp-bar"></div></div>
+        <div class="bar-bg">
+            <div class="bar-fill" id="ui-exp-bar"></div>
+        </div>
         <div style="text-align: right; font-size: 0.8rem; margin-top: 5px; color: var(--muted);" id="ui-exp-text">0 / 1000 XP</div>
     </div>
 
@@ -193,10 +524,26 @@
         </div>
         
         <div class="stats-grid">
-            <div class="stat-box"><div class="stat-icon">💪</div><div class="stat-name">СИЛА</div><div class="stat-hours"><span id="st-str">0</span> ч</div></div>
-            <div class="stat-box"><div class="stat-icon">🧠</div><div class="stat-name">УМ</div><div class="stat-hours"><span id="st-int">0</span> ч</div></div>
-            <div class="stat-box"><div class="stat-icon">❤️</div><div class="stat-name">ЖИВУЧЕСТЬ</div><div class="stat-hours"><span id="st-vit">0</span> ч</div></div>
-            <div class="stat-box"><div class="stat-icon">⚡</div><div class="stat-name">ЛОВКОСТЬ</div><div class="stat-hours"><span id="st-agi">0</span> ч</div></div>
+            <div class="stat-box">
+                <div class="stat-icon">💪</div>
+                <div class="stat-name">СИЛА</div>
+                <div class="stat-hours"><span id="st-str">0</span> ч</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon">🧠</div>
+                <div class="stat-name">УМ</div>
+                <div class="stat-hours"><span id="st-int">0</span> ч</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon">❤️</div>
+                <div class="stat-name">ЖИВУЧЕСТЬ</div>
+                <div class="stat-hours"><span id="st-vit">0</span> ч</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-name">ЛОВКОСТЬ</div>
+                <div class="stat-hours"><span id="st-agi">0</span> ч</div>
+            </div>
         </div>
     </div>
 </div>
@@ -232,11 +579,21 @@
                 <span style="font-size: 0.8rem; color: var(--muted); text-transform: uppercase;">Аналитика за:</span>
                 <select id="analytics-month" onchange="updateUI()" style="width: auto; margin: 0; padding: 4px 8px; font-size: 0.85rem; border:none; font-weight: bold; background: transparent; color: var(--primary);"></select>
             </div>
-            <div class="analytics-row"><span>Поступления (Жизнь):</span> <span class="text-green" id="month-income">0 ₽</span></div>
-            <div class="analytics-row"><span>Расходы (Жизнь):</span> <span class="text-red" id="month-expense">0 ₽</span></div>
-            <div class="analytics-row"><span>Прибыль с Перекупа:</span> <span class="text-purple" id="month-resell">0 ₽</span></div>
+            <div class="analytics-row">
+                <span>Поступления (Жизнь):</span> 
+                <span class="text-green" id="month-income">0 ₽</span>
+            </div>
+            <div class="analytics-row">
+                <span>Расходы (Жизнь):</span> 
+                <span class="text-red" id="month-expense">0 ₽</span>
+            </div>
+            <div class="analytics-row">
+                <span>Прибыль с Перекупа:</span> 
+                <span class="text-purple" id="month-resell">0 ₽</span>
+            </div>
             <div class="analytics-row" style="border-top: 1px solid #ddd; padding-top: 8px; margin-top: 5px;">
-                <span>Итог месяца (Сальдо):</span> <span id="month-total" style="font-weight: bold;">0 ₽</span>
+                <span>Итог месяца (Сальдо):</span> 
+                <span id="month-total" style="font-weight: bold;">0 ₽</span>
             </div>
             <div class="analytics-row" style="border: none; margin-top: 5px;">
                 <span style="font-size:0.75rem; color:var(--muted);">Переводы в бизнес за месяц: <span id="month-transfers">0</span> ₽</span>
@@ -262,8 +619,14 @@
         <h2>📦 Бизнес / Перекуп</h2>
         <div class="analytics-box">
             <div style="font-size: 0.8rem; color: var(--muted); margin-bottom: 5px; text-transform: uppercase;">Статистика сделок (За всё время)</div>
-            <div class="analytics-row"><span>Чистая прибыль:</span> <span id="resell-net-profit">0 ₽</span></div>
-            <div class="analytics-row"><span>Вложено в товары:</span> <span id="resell-invested">0 ₽</span></div>
+            <div class="analytics-row">
+                <span>Чистая прибыль:</span> 
+                <span id="resell-net-profit">0 ₽</span>
+            </div>
+            <div class="analytics-row">
+                <span>Вложено в товары:</span> 
+                <span id="resell-invested">0 ₽</span>
+            </div>
             <div class="analytics-row" style="border:none; padding-top:0;">
                 <span>Успешных: <span class="text-green" id="resell-wins">0</span></span>
                 <span>Убыточных: <span class="text-red" id="resell-losses">0</span></span>
@@ -331,10 +694,10 @@
         
         <input type="text" id="history-search" class="search-box" placeholder="Поиск по истории..." oninput="updateUI()">
         <div id="search-stats" class="search-stats" style="display: none;">
-            <div style="font-weight: bold; margin-bottom: 5px;">Итоги по запросу:</div>
+            <div style="font-weight: bold; margin-bottom: 8px;">Итоги по запросу:</div>
             <div style="display: flex; justify-content: space-between;">
-                <span style="color: var(--green);">Поступления: <span id="search-income">0</span> ₽</span>
-                <span style="color: var(--red);">Траты: <span id="search-expense">0</span> ₽</span>
+                <span style="color: var(--green); font-weight: bold;">Поступления: <span id="search-income">0</span> ₽</span>
+                <span style="color: var(--red); font-weight: bold;">Траты: <span id="search-expense">0</span> ₽</span>
             </div>
         </div>
 
@@ -364,36 +727,51 @@
 </div>
 
 <script>
+    // Интеграция с Telegram Web App
     if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
-        tg.ready(); tg.expand();
+        tg.ready(); 
+        tg.expand();
         try {
-            tg.setHeaderColor('#f4f7f6'); tg.setBackgroundColor('#f4f7f6');
-            if (tg.requestFullscreen) { tg.requestFullscreen(); }
-        } catch (e) {}
+            tg.setHeaderColor('#f4f7f6'); 
+            tg.setBackgroundColor('#f4f7f6');
+            if (tg.requestFullscreen) { 
+                tg.requestFullscreen(); 
+            }
+        } catch (e) {
+            console.log("Полноэкранный режим не поддерживается");
+        }
     }
 
     let state = {
         profile: { name: "Игрок", age: 0, height: 0, weight: 0 },
-        lvl: 1, exp: 0, wallets: { main: 0, resell: 0 },
-        stats: { str: 0, int: 0, vit: 0, agi: 0 }, activityLog: [],
-        activeGoals: [], completedGoals: [],
+        lvl: 1, 
+        exp: 0, 
+        wallets: { main: 0, resell: 0 },
+        stats: { str: 0, int: 0, vit: 0, agi: 0 }, 
+        activityLog: [],
+        activeGoals: [], 
+        completedGoals: [],
         resell: { activeItems: [], totalProfit: 0, winDeals: 0, lossDeals: 0 },
-        assets: [], debts: [], history: []
+        assets: [], 
+        debts: [], 
+        history: []
     };
     
     let currentFilter = 'all';
-    let isPrivacyMode = false; 
+    let isPrivacyMode = false;
 
     function togglePrivacy() {
         isPrivacyMode = !isPrivacyMode;
         document.getElementById('privacy-btn').innerText = isPrivacyMode ? "🔒" : "🔓";
-        showToast(isPrivacyMode ? "Скрытый режим ВКЛ" : "Скрытый режим ВЫКЛ");
+        showToast(isPrivacyMode ? "Скрытый режим включен" : "Скрытый режим выключен");
         updateUI();
     }
 
     function fmtMoney(amount) {
-        if (isPrivacyMode) return "***";
+        if (isPrivacyMode) {
+            return "***";
+        }
         return amount.toLocaleString();
     }
 
@@ -404,26 +782,35 @@
         let s = String(now.getSeconds()).padStart(2, '0');
         document.getElementById('system-clock').innerText = `${h}:${m}:${s}`;
     }
-    setInterval(updateClock, 1000); updateClock();
+    
+    setInterval(updateClock, 1000); 
+    updateClock();
 
     function loadState() {
         let saved = localStorage.getItem('soloSystemDataV5');
-        if(saved) {
+        if (saved) {
             let parsed = JSON.parse(saved);
             state = { ...state, ...parsed };
-            if(!state.assets) state.assets = []; if(!state.debts) state.debts = [];
-            if(!state.resell) state.resell = { activeItems: [], totalProfit: 0, winDeals: 0, lossDeals: 0 };
-            if(!state.activityLog) state.activityLog = [];
+            if (!state.assets) state.assets = []; 
+            if (!state.debts) state.debts = [];
+            if (!state.resell) state.resell = { activeItems: [], totalProfit: 0, winDeals: 0, lossDeals: 0 };
+            if (!state.activityLog) state.activityLog = [];
         } else {
             openSettingsModal();
         }
-        renderMonthPicker(); renderStatsPeriodPicker(); updateUI();
+        renderMonthPicker(); 
+        renderStatsPeriodPicker(); 
+        updateUI();
     }
 
-    function saveState() { localStorage.setItem('soloSystemDataV5', JSON.stringify(state)); }
+    function saveState() { 
+        localStorage.setItem('soloSystemDataV5', JSON.stringify(state)); 
+    }
 
     function showToast(msg) {
-        let t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block';
+        let t = document.getElementById('toast'); 
+        t.innerText = msg; 
+        t.style.display = 'block';
         setTimeout(() => t.style.display = 'none', 3000);
     }
 
@@ -434,45 +821,68 @@
         document.getElementById('edit-weight').value = state.profile.weight;
         document.getElementById('settings-modal').style.display = 'flex'; 
     }
-    function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
+    
+    function closeSettingsModal() { 
+        document.getElementById('settings-modal').style.display = 'none'; 
+    }
     
     function saveProfile() {
         state.profile.name = document.getElementById('edit-name').value || "Игрок";
         state.profile.age = document.getElementById('edit-age').value || 0;
         state.profile.height = document.getElementById('edit-height').value || 0;
         state.profile.weight = document.getElementById('edit-weight').value || 0;
-        closeSettingsModal(); saveState(); updateUI(); showToast("Профиль сохранен");
+        closeSettingsModal(); 
+        saveState(); 
+        updateUI(); 
+        showToast("Профиль сохранен");
     }
 
     function exportData() {
         const dataStr = JSON.stringify(state);
         const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
         const exportFileDefaultName = 'solo_system_backup_' + new Date().toISOString().slice(0,10) + '.json';
+        
         let linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri); linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click(); showToast("Бэкап скачан!");
+        linkElement.setAttribute('href', dataUri); 
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click(); 
+        showToast("Бэкап скачан!");
     }
 
     function importData(event) {
-        const file = event.target.files[0]; if (!file) return;
+        const file = event.target.files[0]; 
+        if (!file) return;
+        
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
                 const importedState = JSON.parse(e.target.result);
-                if(importedState && importedState.profile && importedState.wallets) {
-                    state = { ...state, ...importedState }; saveState();
-                    renderMonthPicker(); renderStatsPeriodPicker(); updateUI(); closeSettingsModal();
+                if (importedState && importedState.profile && importedState.wallets) {
+                    state = { ...state, ...importedState }; 
+                    saveState();
+                    renderMonthPicker(); 
+                    renderStatsPeriodPicker(); 
+                    updateUI(); 
+                    closeSettingsModal();
                     showToast("Данные восстановлены! 🎉");
-                } else { showToast("❌ Неверный формат"); }
-            } catch (err) { showToast("❌ Ошибка чтения файла"); }
+                } else { 
+                    showToast("❌ Неверный формат"); 
+                }
+            } catch (err) { 
+                showToast("❌ Ошибка чтения файла"); 
+            }
         };
-        reader.readAsText(file); event.target.value = '';
+        reader.readAsText(file); 
+        event.target.value = '';
     }
 
     function getTitle(lvl) {
-        if(lvl < 5) return "Ранг: E (Новичок)"; if(lvl < 10) return "Ранг: D (Боец)";
-        if(lvl < 20) return "Ранг: C (Ветеран)"; if(lvl < 30) return "Ранг: B (Мастер)";
-        if(lvl < 50) return "Ранг: A (Элита)"; return "S-Ранг";
+        if(lvl < 5) return "Ранг: E (Новичок)"; 
+        if(lvl < 10) return "Ранг: D (Боец)";
+        if(lvl < 20) return "Ранг: C (Ветеран)"; 
+        if(lvl < 30) return "Ранг: B (Мастер)";
+        if(lvl < 50) return "Ранг: A (Элита)"; 
+        return "S-Ранг";
     }
 
     function switchTab(tab, el) {
@@ -483,52 +893,98 @@
     }
 
     function logActivity() {
-        let stat = document.getElementById('act-stat').value; let mins = parseInt(document.getElementById('act-time').value);
-        if(!mins || mins <= 0) return showToast("Укажи время!");
+        let stat = document.getElementById('act-stat').value; 
+        let mins = parseInt(document.getElementById('act-time').value);
+        
+        if (!mins || mins <= 0) return showToast("Укажи время!");
+        
         let ts = new Date().getTime();
-        state.stats[stat] += mins; state.activityLog.push({ id: Date.now(), stat: stat, mins: mins, ts: ts });
-        let expGain = mins * 10; state.exp += expGain; checkLevelUp();
-        showToast(`+${expGain} XP!`); document.getElementById('act-time').value = ''; 
-        renderStatsPeriodPicker(); saveState(); updateUI();
+        state.stats[stat] += mins; 
+        state.activityLog.push({ id: Date.now(), stat: stat, mins: mins, ts: ts });
+        
+        let expGain = mins * 10; 
+        state.exp += expGain; 
+        checkLevelUp();
+        
+        showToast(`+${expGain} XP!`); 
+        document.getElementById('act-time').value = ''; 
+        renderStatsPeriodPicker(); 
+        saveState(); 
+        updateUI();
     }
 
     function checkLevelUp() {
         let needed = state.lvl * 1000;
-        if(state.exp >= needed) { state.exp -= needed; state.lvl++; showToast(`🎉 УРОВЕНЬ ПОВЫШЕН ДО ${state.lvl}!`); }
+        if (state.exp >= needed) { 
+            state.exp -= needed; 
+            state.lvl++; 
+            showToast(`🎉 УРОВЕНЬ ПОВЫШЕН ДО ${state.lvl}!`); 
+        }
     }
     
     function addGoal() {
-        let text = document.getElementById('new-goal').value; let diff = parseInt(document.getElementById('goal-diff').value);
-        if(!text) return showToast("Введите текст!");
-        state.activeGoals.push({ id: Date.now(), text, diff }); document.getElementById('new-goal').value = ''; saveState(); updateUI();
+        let text = document.getElementById('new-goal').value; 
+        let diff = parseInt(document.getElementById('goal-diff').value);
+        
+        if (!text) return showToast("Введите текст!");
+        
+        state.activeGoals.push({ id: Date.now(), text, diff }); 
+        document.getElementById('new-goal').value = ''; 
+        saveState(); 
+        updateUI();
     }
+
     function confirmGoal(id) {
-        if(confirm("Выполнил?")) {
+        if (confirm("Выполнил?")) {
             let i = state.activeGoals.findIndex(x => x.id === id);
-            if(i > -1) {
-                let g = state.activeGoals[i]; let rew = g.diff * 15; state.exp += rew;
-                state.completedGoals.unshift(g); state.activeGoals.splice(i, 1);
-                showToast(`+${rew} XP`); checkLevelUp(); saveState(); updateUI();
+            if (i > -1) {
+                let g = state.activeGoals[i]; 
+                let rew = g.diff * 15; 
+                state.exp += rew;
+                state.completedGoals.unshift(g); 
+                state.activeGoals.splice(i, 1);
+                showToast(`+${rew} XP`); 
+                checkLevelUp(); 
+                saveState(); 
+                updateUI();
             }
         }
     }
+
     function toggleArchive() {
-        let a = document.getElementById('completed-goals-list'); a.style.display = a.style.display === 'none' ? 'block' : 'none';
+        let a = document.getElementById('completed-goals-list'); 
+        a.style.display = a.style.display === 'none' ? 'block' : 'none';
     }
 
-    function toggleFinCat() { document.getElementById('fin-cat').style.display = document.getElementById('fin-type').value === 'expense' ? 'block' : 'none'; }
+    function toggleFinCat() { 
+        document.getElementById('fin-cat').style.display = document.getElementById('fin-type').value === 'expense' ? 'block' : 'none'; 
+    }
     
     function logFinance() {
-        let type = document.getElementById('fin-type').value; let amount = parseInt(document.getElementById('fin-amount').value);
-        if(!amount || amount <= 0) return showToast("Укажи сумму!");
-        if(type === 'expense' && state.wallets.main < amount) return showToast("❌ Недостаточно средств!");
+        let type = document.getElementById('fin-type').value; 
+        let amount = parseInt(document.getElementById('fin-amount').value);
+        
+        if (!amount || amount <= 0) return showToast("Укажи сумму!");
+        if (type === 'expense' && state.wallets.main < amount) return showToast("❌ Недостаточно средств!");
+        
         let cat = type === 'expense' ? `[${document.getElementById('fin-cat').value}] ` : "";
         let desc = document.getElementById('fin-desc').value;
         let text = cat + (desc || (type === 'expense' ? "Трата" : "Пополнение"));
-        if(type === 'income') state.wallets.main += amount; else state.wallets.main -= amount;
+        
+        if (type === 'income') {
+            state.wallets.main += amount; 
+        } else {
+            state.wallets.main -= amount;
+        }
+        
         addToHistory(text, amount, type === 'income' ? 'plus' : 'minus', "main");
-        document.getElementById('fin-amount').value = ''; document.getElementById('fin-desc').value = '';
-        renderMonthPicker(); showToast("Записано"); saveState(); updateUI();
+        
+        document.getElementById('fin-amount').value = ''; 
+        document.getElementById('fin-desc').value = '';
+        renderMonthPicker(); 
+        showToast("Записано"); 
+        saveState(); 
+        updateUI();
     }
 
     function toggleResellMode() {
@@ -538,189 +994,328 @@
     }
 
     function buyResellItem() {
-        let name = document.getElementById('resell-buy-item').value; let cost = parseInt(document.getElementById('resell-buy-amount').value);
-        if(!name || !cost || cost <= 0) return showToast("Укажите данные!");
-        if(state.wallets.resell < cost) return showToast("❌ Недостаточно средств!");
+        let name = document.getElementById('resell-buy-item').value; 
+        let cost = parseInt(document.getElementById('resell-buy-amount').value);
+        
+        if (!name || !cost || cost <= 0) return showToast("Укажите данные!");
+        if (state.wallets.resell < cost) return showToast("❌ Недостаточно средств!");
+        
         state.resell.activeItems.push({ id: Date.now(), name, cost, date: new Date().getTime() });
-        state.wallets.resell -= cost; addToHistory(`Покупка: ${name}`, cost, 'minus', 'resell');
-        document.getElementById('resell-buy-item').value = ''; document.getElementById('resell-buy-amount').value = '';
-        showToast("Товар на складе"); saveState(); updateUI();
+        state.wallets.resell -= cost; 
+        
+        addToHistory(`Покупка: ${name}`, cost, 'minus', 'resell');
+        
+        document.getElementById('resell-buy-item').value = ''; 
+        document.getElementById('resell-buy-amount').value = '';
+        showToast("Товар на складе"); 
+        saveState(); 
+        updateUI();
     }
 
     function sellResellItem() {
-        let id = document.getElementById('resell-inventory-list').value; let sellPrice = parseInt(document.getElementById('resell-sell-amount').value);
-        if(!id || !sellPrice || sellPrice <= 0) return showToast("Укажите сумму продажи!");
+        let id = document.getElementById('resell-inventory-list').value; 
+        let sellPrice = parseInt(document.getElementById('resell-sell-amount').value);
+        
+        if (!id || !sellPrice || sellPrice <= 0) return showToast("Укажите сумму продажи!");
+        
         let idx = state.resell.activeItems.findIndex(x => x.id == id);
-        if(idx > -1) {
-            let item = state.resell.activeItems[idx]; let profit = sellPrice - item.cost;
-            state.resell.totalProfit += profit; if(profit >= 0) state.resell.winDeals++; else state.resell.lossDeals++;
-            state.wallets.resell += sellPrice; state.resell.activeItems.splice(idx, 1);
+        if (idx > -1) {
+            let item = state.resell.activeItems[idx]; 
+            let profit = sellPrice - item.cost;
+            state.resell.totalProfit += profit; 
+            
+            if (profit >= 0) {
+                state.resell.winDeals++; 
+            } else {
+                state.resell.lossDeals++;
+            }
+            
+            state.wallets.resell += sellPrice; 
+            state.resell.activeItems.splice(idx, 1);
+            
             addToHistory(`Продажа: ${item.name}`, sellPrice, 'plus', 'resell', { profit, isWin: profit >= 0 });
+            
             document.getElementById('resell-sell-amount').value = '';
-            showToast(profit >= 0 ? `ПЛЮС: ${profit} ₽` : `УБЫТОК: ${profit} ₽`); saveState(); updateUI();
+            showToast(profit >= 0 ? `ПЛЮС: ${profit} ₽` : `УБЫТОК: ${profit} ₽`); 
+            saveState(); 
+            updateUI();
         }
     }
 
     function executeTransfer() {
-        let dir = document.getElementById('transfer-dir').value; let amount = parseInt(document.getElementById('transfer-amount').value);
-        if(!amount || amount <= 0) return showToast("Укажите сумму!");
-        if(dir === 'm2r') {
-            if(state.wallets.main < amount) return showToast("❌ Мало средств!");
-            state.wallets.main -= amount; state.wallets.resell += amount; addToHistory(`Перевод в Перекуп`, amount, 'transfer', 'transfer');
+        let dir = document.getElementById('transfer-dir').value; 
+        let amount = parseInt(document.getElementById('transfer-amount').value);
+        
+        if (!amount || amount <= 0) return showToast("Укажите сумму!");
+        
+        if (dir === 'm2r') {
+            if (state.wallets.main < amount) return showToast("❌ Мало средств!");
+            state.wallets.main -= amount; 
+            state.wallets.resell += amount; 
+            addToHistory(`Перевод в Перекуп`, amount, 'transfer', 'transfer');
         } else {
-            if(state.wallets.resell < amount) return showToast("❌ Мало средств!");
-            state.wallets.resell -= amount; state.wallets.main += amount; addToHistory(`Вывод из Перекупа`, amount, 'transfer', 'transfer');
+            if (state.wallets.resell < amount) return showToast("❌ Мало средств!");
+            state.wallets.resell -= amount; 
+            state.wallets.main += amount; 
+            addToHistory(`Вывод из Перекупа`, amount, 'transfer', 'transfer');
         }
-        document.getElementById('transfer-amount').value = ''; showToast("Переведено"); renderMonthPicker(); saveState(); updateUI();
+        
+        document.getElementById('transfer-amount').value = ''; 
+        showToast("Переведено"); 
+        renderMonthPicker(); 
+        saveState(); 
+        updateUI();
     }
 
     function addAsset() {
-        let name = document.getElementById('asset-name').value; let val = parseInt(document.getElementById('asset-value').value);
-        if(!name || !val || val <= 0) return showToast("Укажите данные");
+        let name = document.getElementById('asset-name').value; 
+        let val = parseInt(document.getElementById('asset-value').value);
+        
+        if (!name || !val || val <= 0) return showToast("Укажите данные");
+        
         state.assets.push({ id: Date.now(), name, value: val });
-        document.getElementById('asset-name').value = ''; document.getElementById('asset-value').value = '';
-        saveState(); updateUI(); showToast("Актив добавлен");
+        document.getElementById('asset-name').value = ''; 
+        document.getElementById('asset-value').value = '';
+        saveState(); 
+        updateUI(); 
+        showToast("Актив добавлен");
     }
+
     function updateAsset(id) {
         let idx = state.assets.findIndex(a => a.id === id);
-        if(idx > -1) {
+        if (idx > -1) {
             let newVal = prompt(`Новая оценка для ${state.assets[idx].name}:`, state.assets[idx].value);
-            if(newVal && !isNaN(parseInt(newVal))) { state.assets[idx].value = parseInt(newVal); saveState(); updateUI(); }
+            if (newVal && !isNaN(parseInt(newVal))) { 
+                state.assets[idx].value = parseInt(newVal); 
+                saveState(); 
+                updateUI(); 
+            }
         }
     }
-    function deleteAsset(id) { if(confirm("Удалить актив?")) { state.assets = state.assets.filter(a => a.id !== id); saveState(); updateUI(); } }
+
+    function deleteAsset(id) { 
+        if (confirm("Удалить актив?")) { 
+            state.assets = state.assets.filter(a => a.id !== id); 
+            saveState(); 
+            updateUI(); 
+        } 
+    }
 
     function addDebt() {
-        let type = document.getElementById('debt-type').value; let name = document.getElementById('debt-name').value;
-        let amount = parseInt(document.getElementById('debt-amount').value); let due = document.getElementById('debt-date').value || "Без срока";
+        let type = document.getElementById('debt-type').value; 
+        let name = document.getElementById('debt-name').value;
+        let amount = parseInt(document.getElementById('debt-amount').value); 
+        let due = document.getElementById('debt-date').value || "Без срока";
         let isOld = document.getElementById('debt-is-old').checked;
 
-        if(!name || !amount || amount <= 0) return showToast("Заполни поля!");
+        if (!name || !amount || amount <= 0) return showToast("Заполни поля!");
+        
         if (!isOld) {
-            if(type === 'owe_me') {
-                if(state.wallets.main < amount) return showToast("❌ Нет столько средств!");
-                state.wallets.main -= amount; addToHistory(`Дал в долг: ${name}`, amount, 'minus', 'main');
+            if (type === 'owe_me') {
+                if (state.wallets.main < amount) return showToast("❌ Нет столько средств!");
+                state.wallets.main -= amount; 
+                addToHistory(`Дал в долг: ${name}`, amount, 'minus', 'main');
             } else {
-                state.wallets.main += amount; addToHistory(`Взял в долг у: ${name}`, amount, 'plus', 'main');
+                state.wallets.main += amount; 
+                addToHistory(`Взял в долг у: ${name}`, amount, 'plus', 'main');
             }
         }
+        
         state.debts.push({ id: Date.now(), name, type, amount, dueDate: due });
-        document.getElementById('debt-name').value = ''; document.getElementById('debt-amount').value = ''; document.getElementById('debt-is-old').checked = false;
-        saveState(); updateUI(); showToast("Долг оформлен");
+        document.getElementById('debt-name').value = ''; 
+        document.getElementById('debt-amount').value = ''; 
+        document.getElementById('debt-is-old').checked = false;
+        saveState(); 
+        updateUI(); 
+        showToast("Долг оформлен");
     }
 
+    // Восстановленная функция частичного погашения долга
     function resolveDebt(id) {
         let idx = state.debts.findIndex(d => d.id === id);
-        if(idx > -1) {
+        if (idx > -1) {
             let d = state.debts[idx];
             let payAmount = prompt(`Погашение долга: ${d.name}\nОстаток: ${d.amount} ₽\nСколько вы хотите внести/получить сейчас?`, d.amount);
-            if(payAmount === null || payAmount === "") return;
+            
+            if (payAmount === null || payAmount === "") return;
             payAmount = parseInt(payAmount);
-            if(isNaN(payAmount) || payAmount <= 0) return showToast("❌ Введите корректную сумму");
-            if(payAmount > d.amount) return showToast("❌ Сумма превышает остаток долга!");
+            
+            if (isNaN(payAmount) || payAmount <= 0) return showToast("❌ Введите корректную сумму");
+            if (payAmount > d.amount) return showToast("❌ Сумма превышает остаток долга!");
 
-            let isFull = (payAmount === d.amount); let histText = '';
+            let isFull = (payAmount === d.amount); 
+            let histText = '';
 
-            if(d.type === 'owe_me') {
-                state.wallets.main += payAmount; histText = isFull ? `Погашение долга (от ${d.name})` : `Частичный возврат долга (от ${d.name})`;
+            if (d.type === 'owe_me') {
+                state.wallets.main += payAmount; 
+                histText = isFull ? `Погашение долга (от ${d.name})` : `Частичный возврат долга (от ${d.name})`;
                 addToHistory(histText, payAmount, 'plus', 'main');
             } else {
-                if(state.wallets.main < payAmount) return showToast("❌ Недостаточно средств!");
-                state.wallets.main -= payAmount; histText = isFull ? `Погашение долга (для ${d.name})` : `Частичное погашение долга (для ${d.name})`;
+                if (state.wallets.main < payAmount) return showToast("❌ Недостаточно средств!");
+                state.wallets.main -= payAmount; 
+                histText = isFull ? `Погашение долга (для ${d.name})` : `Частичное погашение долга (для ${d.name})`;
                 addToHistory(histText, payAmount, 'minus', 'main');
             }
+            
             d.amount -= payAmount;
-            if(d.amount === 0) { state.debts.splice(idx, 1); showToast("Долг закрыт!"); } else { showToast(`Осталось: ${d.amount} ₽`); }
-            saveState(); updateUI();
+            if (d.amount === 0) { 
+                state.debts.splice(idx, 1); 
+                showToast("Долг полностью закрыт! 🎉"); 
+            } else { 
+                showToast(`Внесено ${payAmount} ₽. Осталось: ${d.amount} ₽`); 
+            }
+            
+            saveState(); 
+            updateUI();
         }
     }
 
     function editDebt(id) {
         let idx = state.debts.findIndex(d => d.id === id);
-        if(idx > -1) {
-            let newVal = prompt(`Исправить остаток долга для ${state.debts[idx].name}:\n(Без проведения по кассе)`, state.debts[idx].amount);
-            if(newVal !== null && newVal !== "") {
+        if (idx > -1) {
+            let newVal = prompt(`Исправить остаток долга для ${state.debts[idx].name}:\n(Это просто изменит цифру без проведения по кассе)`, state.debts[idx].amount);
+            if (newVal !== null && newVal !== "") {
                 newVal = parseInt(newVal);
-                if(!isNaN(newVal) && newVal >= 0) {
-                    state.debts[idx].amount = newVal; if(newVal === 0) state.debts.splice(idx, 1);
-                    saveState(); updateUI(); showToast("Обновлено");
+                if (!isNaN(newVal) && newVal >= 0) {
+                    state.debts[idx].amount = newVal; 
+                    if (newVal === 0) state.debts.splice(idx, 1);
+                    saveState(); 
+                    updateUI(); 
+                    showToast("Долг обновлен");
                 }
             }
         }
     }
 
     function deleteDebt(id) {
-        if(confirm("Удалить запись о долге?")) { state.debts = state.debts.filter(d => d.id !== id); saveState(); updateUI(); }
+        if (confirm("Вы уверены, что хотите удалить эту запись о долге? (Деньги в кассе не изменятся)")) { 
+            state.debts = state.debts.filter(d => d.id !== id); 
+            saveState(); 
+            updateUI(); 
+            showToast("Долг удален"); 
+        }
     }
 
     function addToHistory(text, amount, type, wallet, profitInfo = null) {
-        let now = new Date(); let dateStr = now.toLocaleString('ru-RU', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'});
+        let now = new Date(); 
+        let dateStr = now.toLocaleString('ru-RU', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'});
         state.history.unshift({ id: Date.now(), text, amount, type, wallet, date: dateStr, ts: now.getTime(), profitInfo });
     }
     
     function editHistory(id) {
         let item = state.history.find(h => h.id === id);
-        if(!item || item.wallet === 'transfer') return showToast("Переводы не редактируются");
-        if(item.profitInfo) return showToast("Сделки закреплены");
+        if (!item || item.wallet === 'transfer') return showToast("Переводы не редактируются");
+        if (item.profitInfo) return showToast("Сделки закреплены");
         
         let newAmount = prompt(`Изменить сумму (0 для отмены):\n${item.text}`, item.amount);
-        if(newAmount !== null && newAmount !== "") {
+        if (newAmount !== null && newAmount !== "") {
             newAmount = parseInt(newAmount);
-            if(isNaN(newAmount) || newAmount < 0) return showToast("Ошибка");
+            if (isNaN(newAmount) || newAmount < 0) return showToast("Ошибка");
+            
             let diff = newAmount - item.amount;
-            if(item.type === 'plus') state.wallets[item.wallet] += diff; else state.wallets[item.wallet] -= diff; 
-            if(state.wallets[item.wallet] < 0) {
-                if(item.type === 'plus') state.wallets[item.wallet] -= diff; else state.wallets[item.wallet] += diff; 
+            
+            if (item.type === 'plus') {
+                state.wallets[item.wallet] += diff; 
+            } else {
+                state.wallets[item.wallet] -= diff; 
+            }
+            
+            if (state.wallets[item.wallet] < 0) {
+                if (item.type === 'plus') {
+                    state.wallets[item.wallet] -= diff; 
+                } else {
+                    state.wallets[item.wallet] += diff; 
+                }
                 return showToast("❌ Баланс уйдет в минус!");
             }
-            if(item.wallet === 'resell' && item.type === 'minus') {
+            
+            if (item.wallet === 'resell' && item.type === 'minus') {
                 let itemName = item.text.replace("Покупка: ", "");
                 let actItem = state.resell.activeItems.find(x => x.name === itemName && x.cost === item.amount);
-                if(actItem) actItem.cost = newAmount;
+                if (actItem) actItem.cost = newAmount;
             }
+            
             item.amount = newAmount;
-            if(newAmount === 0 && !item.text.includes("[Отменено]")) item.text = `<s>${item.text}</s> [Отменено]`;
-            showToast("Обновлено!"); saveState(); updateUI();
+            if (newAmount === 0 && !item.text.includes("[Отменено]")) {
+                item.text = `<s>${item.text}</s> [Отменено]`;
+            }
+            showToast("Обновлено!"); 
+            saveState(); 
+            updateUI();
         }
     }
 
     function setFilter(filter, el) {
-        currentFilter = filter; document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        el.classList.add('active'); updateUI();
+        currentFilter = filter; 
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active'); 
+        updateUI();
     }
 
     function renderMonthPicker() {
-        let months = new Set(); let now = new Date(); months.add(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`);
+        let months = new Set(); 
+        let now = new Date(); 
+        months.add(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`);
+        
         state.history.forEach(h => {
-            if(h.ts) { let d = new Date(h.ts); months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`); }
+            if (h.ts) { 
+                let d = new Date(h.ts); 
+                months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`); 
+            }
         });
-        let arr = Array.from(months).sort().reverse(); let oldVal = document.getElementById('analytics-month').value;
+        
+        let arr = Array.from(months).sort().reverse(); 
+        
         let optionsHtml = arr.map(m => {
-            let [y, mo] = m.split('-'); let dName = new Date(y, mo - 1).toLocaleString('ru-RU', {month: 'long', year: 'numeric'});
-            dName = dName.charAt(0).toUpperCase() + dName.slice(1); return `<option value="${m}">${dName}</option>`;
+            let [y, mo] = m.split('-'); 
+            let dName = new Date(y, mo - 1).toLocaleString('ru-RU', {month: 'long', year: 'numeric'});
+            dName = dName.charAt(0).toUpperCase() + dName.slice(1); 
+            return `<option value="${m}">${dName}</option>`;
         }).join('');
         
         ['analytics-month', 'history-month'].forEach(id => {
             let sel = document.getElementById(id);
-            if(sel) { let old = sel.value; sel.innerHTML = optionsHtml; if(arr.includes(old)) sel.value = old; else sel.value = arr[0]; }
+            if (sel) { 
+                let old = sel.value; 
+                sel.innerHTML = optionsHtml; 
+                if (arr.includes(old)) sel.value = old; 
+                else sel.value = arr[0]; 
+            }
         });
     }
 
     function renderStatsPeriodPicker() {
-        let sel = document.getElementById('stats-period'); let oldVal = sel.value;
+        let sel = document.getElementById('stats-period'); 
+        let oldVal = sel.value;
         let html = `<option value="all">За всё время</option><option value="week">За последние 7 дней</option><option value="year">За этот год</option>`;
-        let months = new Set(); let now = new Date(); months.add(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`);
+        
+        let months = new Set(); 
+        let now = new Date(); 
+        months.add(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`);
+        
         if (state.activityLog) {
             state.activityLog.forEach(log => {
-                if(log.ts) { let d = new Date(log.ts); months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`); }
+                if (log.ts) { 
+                    let d = new Date(log.ts); 
+                    months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`); 
+                }
             });
         }
+        
         let arr = Array.from(months).sort().reverse();
         arr.forEach(m => {
-            let [y, mo] = m.split('-'); let dName = new Date(y, mo - 1).toLocaleString('ru-RU', {month: 'long', year: 'numeric'});
-            dName = dName.charAt(0).toUpperCase() + dName.slice(1); html += `<option value="${m}">${dName}</option>`;
+            let [y, mo] = m.split('-'); 
+            let dName = new Date(y, mo - 1).toLocaleString('ru-RU', {month: 'long', year: 'numeric'});
+            dName = dName.charAt(0).toUpperCase() + dName.slice(1); 
+            html += `<option value="${m}">${dName}</option>`;
         });
-        sel.innerHTML = html; if(oldVal && sel.querySelector(`option[value="${oldVal}"]`)) { sel.value = oldVal; } else { sel.value = 'all'; }
+        
+        sel.innerHTML = html; 
+        if (oldVal && sel.querySelector(`option[value="${oldVal}"]`)) { 
+            sel.value = oldVal; 
+        } else { 
+            sel.value = 'all'; 
+        }
     }
 
     function updateUI() {
@@ -741,32 +1336,50 @@
         if (period === 'all') {
             displayStats = { ...state.stats };
         } else {
-            let now = new Date().getTime(); let limit = 0; let filterByMonth = false; let fYear, fMonth;
+            let now = new Date().getTime(); 
+            let limit = 0; 
+            let filterByMonth = false; 
+            let fYear, fMonth;
+            
             if (period === 'week') limit = now - 7 * 24 * 3600 * 1000;
             else if (period === 'year') limit = now - 365 * 24 * 3600 * 1000;
-            else if (period.includes('-')) { filterByMonth = true; [fYear, fMonth] = period.split('-'); }
+            else if (period.includes('-')) { 
+                filterByMonth = true; 
+                [fYear, fMonth] = period.split('-'); 
+            }
 
             if (state.activityLog) {
                 state.activityLog.forEach(log => {
                     if (log.ts) {
                         if (filterByMonth) {
                             let d = new Date(log.ts);
-                            if(d.getFullYear() == fYear && (d.getMonth() + 1) == fMonth) { displayStats[log.stat] += log.mins; }
+                            if (d.getFullYear() == fYear && (d.getMonth() + 1) == fMonth) { 
+                                displayStats[log.stat] += log.mins; 
+                            }
                         } else {
-                            if (log.ts >= limit) { displayStats[log.stat] += log.mins; }
+                            if (log.ts >= limit) { 
+                                displayStats[log.stat] += log.mins; 
+                            }
                         }
                     }
                 });
             }
         }
-        ['str', 'int', 'vit', 'agi'].forEach(stat => { document.getElementById(`st-${stat}`).innerText = (displayStats[stat] / 60).toFixed(1); });
+        
+        ['str', 'int', 'vit', 'agi'].forEach(stat => { 
+            document.getElementById(`st-${stat}`).innerText = (displayStats[stat] / 60).toFixed(1); 
+        });
 
+        // ФОРМАТИРОВАНИЕ С УЧЕТОМ СКРЫТОГО РЕЖИМА
         document.getElementById('w-main-val').innerText = fmtMoney(state.wallets.main);
         document.getElementById('w-resell-val').innerText = fmtMoney(state.wallets.resell);
 
         let list = document.getElementById('resell-inventory-list');
-        if(state.resell.activeItems.length === 0) list.innerHTML = '<option value="" disabled selected>Склад пуст</option>';
-        else list.innerHTML = state.resell.activeItems.map(i => `<option value="${i.id}">${i.name} (${fmtMoney(i.cost)} ₽)</option>`).join('');
+        if (state.resell.activeItems.length === 0) {
+            list.innerHTML = '<option value="" disabled selected>Склад пуст</option>';
+        } else {
+            list.innerHTML = state.resell.activeItems.map(i => `<option value="${i.id}">${i.name} (${fmtMoney(i.cost)} ₽)</option>`).join('');
+        }
 
         let invested = state.resell.activeItems.reduce((sum, item) => sum + item.cost, 0);
         document.getElementById('resell-invested').innerText = fmtMoney(invested) + ' ₽';
@@ -776,22 +1389,25 @@
         document.getElementById('resell-losses').innerText = state.resell.lossDeals;
 
         let selectedMonth = document.getElementById('analytics-month').value;
-        let mIncome = 0; let mExpense = 0; let mResellProfit = 0; let mTransfers = 0;
+        let mIncome = 0; 
+        let mExpense = 0; 
+        let mResellProfit = 0; 
+        let mTransfers = 0;
         
-        if(selectedMonth) {
+        if (selectedMonth) {
             let [y, m] = selectedMonth.split('-');
             state.history.forEach(h => {
-                if(h.ts) {
+                if (h.ts) {
                     let d = new Date(h.ts);
-                    if(d.getFullYear() == y && (d.getMonth() + 1) == m && !h.text.includes("[Отменено]")) {
-                        if(h.wallet === 'main') {
-                            if(h.type === 'plus') mIncome += h.amount;
-                            if(h.type === 'minus') mExpense += h.amount;
-                        } else if(h.wallet === 'resell' && h.profitInfo) {
+                    if (d.getFullYear() == y && (d.getMonth() + 1) == m && !h.text.includes("[Отменено]")) {
+                        if (h.wallet === 'main') {
+                            if (h.type === 'plus') mIncome += h.amount;
+                            if (h.type === 'minus') mExpense += h.amount;
+                        } else if (h.wallet === 'resell' && h.profitInfo) {
                             mResellProfit += h.profitInfo.profit;
-                        } else if(h.wallet === 'transfer') {
-                            if(h.text.includes('в Перекуп')) mTransfers += h.amount;
-                            if(h.text.includes('из Перекупа')) mTransfers -= h.amount;
+                        } else if (h.wallet === 'transfer') {
+                            if (h.text.includes('в Перекуп')) mTransfers += h.amount;
+                            if (h.text.includes('из Перекупа')) mTransfers -= h.amount;
                         }
                     }
                 }
@@ -816,42 +1432,53 @@
         document.getElementById('total-net-worth').innerText = fmtMoney(netWorth);
 
         let aList = document.getElementById('assets-list');
-        if(state.assets.length === 0) aList.innerHTML = '<div style="color:#888; font-size:0.85rem;">Нет добавленных активов</div>';
-        else aList.innerHTML = state.assets.map(a => `
+        if (state.assets.length === 0) {
+            aList.innerHTML = '<div style="color:#888; font-size:0.85rem;">Нет добавленных активов</div>';
+        } else {
+            aList.innerHTML = state.assets.map(a => `
             <div class="list-item">
                 <div class="item-info"><span style="font-weight:bold;">${a.name}</span></div>
                 <div style="font-weight:bold; color:var(--primary); margin-right: 15px;">${fmtMoney(a.value)} ₽</div>
                 <button class="edit-btn" onclick="updateAsset(${a.id})">✏️</button>
                 <button class="edit-btn" style="color:var(--red); margin-left:10px;" onclick="deleteAsset(${a.id})">🗑️</button>
             </div>`).join('');
+        }
 
         let dList = document.getElementById('debts-list');
-        if(state.debts.length === 0) dList.innerHTML = '<div style="color:#888; font-size:0.85rem;">Активных долгов нет</div>';
-        else dList.innerHTML = state.debts.map(d => {
-            let isOweMe = d.type === 'owe_me'; let color = isOweMe ? 'var(--green)' : 'var(--red)'; 
-            let badgeText = isOweMe ? '⬇️ ДОЛЖНИК' : '⬆️ КРЕДИТОР'; let actionText = isOweMe ? 'Взыскать' : 'Погасить';
-            let dateText = (d.dueDate && d.dueDate !== "Без срока") ? `Срок: ${d.dueDate}` : "Бессрочно";
-            return `
-            <div class="card" style="border-left: 4px solid ${color}; padding: 15px; margin-bottom: 10px; background: #fafafa; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-size: 0.75rem; font-weight: bold; color: ${color}; background: ${isOweMe ? 'rgba(39, 174, 96, 0.1)' : 'rgba(231, 76, 60, 0.1)'}; padding: 3px 8px; border-radius: 12px;">${badgeText}</span>
-                    <span style="font-size: 0.75rem; color: var(--muted);">${dateText}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <div style="font-weight: bold; font-size: 1.1rem; color: var(--text);">${d.name}</div>
-                    <div style="font-weight: bold; font-size: 1.3rem; color: ${color};">${fmtMoney(d.amount)} ₽</div>
-                </div>
-                <div style="display: flex; justify-content: space-between; gap: 10px;">
-                    <button class="btn-outline" style="flex: 1; padding: 8px; font-size: 0.85rem; border-color: ${color}; color: ${color};" onclick="resolveDebt(${d.id})">${actionText}</button>
-                    <button class="edit-btn" style="background: #eee; border-radius: 8px; padding: 0 15px; font-size: 1rem; color: var(--secondary);" onclick="editDebt(${d.id})">✏️</button>
-                    <button class="edit-btn" style="background: #eee; border-radius: 8px; padding: 0 15px; font-size: 1rem; color: var(--red);" onclick="deleteDebt(${d.id})">🗑️</button>
-                </div>
-            </div>`;
-        }).join('');
+        if (state.debts.length === 0) {
+            dList.innerHTML = '<div style="color:#888; font-size:0.85rem;">Активных долгов нет</div>';
+        } else {
+            dList.innerHTML = state.debts.map(d => {
+                let isOweMe = d.type === 'owe_me'; 
+                let color = isOweMe ? 'var(--green)' : 'var(--red)'; 
+                let badgeText = isOweMe ? '⬇️ ДОЛЖНИК' : '⬆️ КРЕДИТОР'; 
+                let actionText = isOweMe ? 'Взыскать' : 'Погасить';
+                let dateText = (d.dueDate && d.dueDate !== "Без срока") ? `Срок: ${d.dueDate}` : "Бессрочно";
+                
+                return `
+                <div class="card" style="border-left: 4px solid ${color}; padding: 15px; margin-bottom: 10px; background: #fafafa; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 0.75rem; font-weight: bold; color: ${color}; background: ${isOweMe ? 'rgba(39, 174, 96, 0.1)' : 'rgba(231, 76, 60, 0.1)'}; padding: 3px 8px; border-radius: 12px;">${badgeText}</span>
+                        <span style="font-size: 0.75rem; color: var(--muted);">${dateText}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div style="font-weight: bold; font-size: 1.1rem; color: var(--text);">${d.name}</div>
+                        <div style="font-weight: bold; font-size: 1.3rem; color: ${color};">${fmtMoney(d.amount)} ₽</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; gap: 10px;">
+                        <button class="btn-outline" style="flex: 1; padding: 8px; font-size: 0.85rem; border-color: ${color}; color: ${color};" onclick="resolveDebt(${d.id})">${actionText}</button>
+                        <button class="edit-btn" style="background: #eee; border-radius: 8px; padding: 0 15px; font-size: 1rem; color: var(--secondary);" onclick="editDebt(${d.id})">✏️</button>
+                        <button class="edit-btn" style="background: #eee; border-radius: 8px; padding: 0 15px; font-size: 1rem; color: var(--red);" onclick="deleteDebt(${d.id})">🗑️</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
 
         let aGoals = document.getElementById('active-goals-list');
-        if(state.activeGoals.length === 0) aGoals.innerHTML = '<div style="color:#888; text-align:center; font-size:0.9rem;">Нет активных заданий</div>';
-        else aGoals.innerHTML = state.activeGoals.map(g => `
+        if (state.activeGoals.length === 0) {
+            aGoals.innerHTML = '<div style="color:#888; text-align:center; font-size:0.9rem;">Нет активных заданий</div>';
+        } else {
+            aGoals.innerHTML = state.activeGoals.map(g => `
             <div class="list-item">
                 <div class="item-info">
                     <span style="font-size: 0.75rem; color: var(--gold); font-weight: bold; background: rgba(243, 156, 18, 0.1); padding: 2px 6px; border-radius: 4px;">Сложность: ${g.diff}</span><br>
@@ -859,15 +1486,20 @@
                 </div>
                 <button class="btn-green" style="width:auto; padding:8px 15px; font-size:0.9rem;" onclick="confirmGoal(${g.id})">Сделал</button>
             </div>`).join('');
+        }
 
         let cGoals = document.getElementById('completed-goals-list');
-        if(state.completedGoals.length === 0) cGoals.innerHTML = '<div style="color:#888; text-align:center; font-size:0.9rem;">Архив пуст</div>';
-        else cGoals.innerHTML = state.completedGoals.map(g => `
+        if (state.completedGoals.length === 0) {
+            cGoals.innerHTML = '<div style="color:#888; text-align:center; font-size:0.9rem;">Архив пуст</div>';
+        } else {
+            cGoals.innerHTML = state.completedGoals.map(g => `
             <div class="list-item done">
                 <div class="item-info"><span>${g.text}</span></div>
                 <div style="font-size:0.8rem; font-weight:bold; color:var(--gold);">+${g.diff*15} XP</div>
             </div>`).join('');
+        }
 
+        // ЛЕТОПИСЬ: Умный поиск по тексту, фильтры и категории
         let hl = document.getElementById('history-list');
         let hMonthCont = document.getElementById('history-month-container');
         let searchVal = document.getElementById('history-search').value.toLowerCase().trim();
@@ -875,15 +1507,22 @@
 
         let fHistory = state.history;
         
+        // Логика простого текстового поиска
         if (searchVal) {
             fHistory = fHistory.filter(h => h.text.toLowerCase().includes(searchVal));
-            let sInc = 0, sExp = 0;
+            let sInc = 0;
+            let sExp = 0;
+            
             fHistory.forEach(h => {
-                if(!h.text.includes("[Отменено]")) {
-                    if(h.type === 'plus') sInc += h.amount;
-                    else if(h.type === 'minus') sExp += h.amount;
+                if (!h.text.includes("[Отменено]")) {
+                    if (h.type === 'plus') {
+                        sInc += h.amount;
+                    } else if (h.type === 'minus') {
+                        sExp += h.amount;
+                    }
                 }
             });
+            
             document.getElementById('search-income').innerText = fmtMoney(sInc);
             document.getElementById('search-expense').innerText = fmtMoney(sExp);
             searchStats.style.display = 'block';
@@ -894,7 +1533,8 @@
         if (currentFilter === 'categories') {
             hMonthCont.style.display = 'block';
             let selMonth = document.getElementById('history-month').value;
-            let catTotals = {}; let totalExp = 0;
+            let catTotals = {}; 
+            let totalExp = 0;
 
             if (selMonth) {
                 let [y, m] = selMonth.split('-');
@@ -917,7 +1557,10 @@
                 let catIcons = { 'Еда': '🍔', 'Авто': '🚗', 'Одежда': '👕', 'Прочее': '📦' };
 
                 sortedCats.forEach(c => {
-                    let amt = catTotals[c]; let pct = Math.round((amt / totalExp) * 100); let icon = catIcons[c] || '📊';
+                    let amt = catTotals[c]; 
+                    let pct = Math.round((amt / totalExp) * 100); 
+                    let icon = catIcons[c] || '📊';
+                    
                     catHtml += `
                     <div style="margin-bottom: 12px; padding: 12px; background: #fafafa; border-radius: 8px; border: 1px solid #eee;">
                         <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 6px;">
@@ -929,6 +1572,7 @@
                         </div>
                     </div>`;
                 });
+                
                 catHtml += `<div style="text-align:right; font-size: 0.85rem; color: var(--muted); margin-top: 10px;">Всего расходов: <span style="font-weight:bold; color:var(--text);">${fmtMoney(totalExp)} ₽</span></div>`;
                 hl.innerHTML = catHtml;
             } else {
@@ -936,17 +1580,20 @@
             }
         } else {
             hMonthCont.style.display = 'none';
-            if(currentFilter !== 'all') fHistory = fHistory.filter(h => h.wallet === currentFilter);
+            if (currentFilter !== 'all') {
+                fHistory = fHistory.filter(h => h.wallet === currentFilter);
+            }
 
-            if(fHistory.length === 0) { hl.innerHTML = '<div style="text-align:center; color:#888; padding: 20px;">Пусто</div>'; } 
-            else {
+            if (fHistory.length === 0) { 
+                hl.innerHTML = '<div style="text-align:center; color:#888; padding: 20px;">Пусто</div>'; 
+            } else {
                 hl.innerHTML = fHistory.map(h => {
                     let badge = h.wallet === 'main' ? 'Личн.' : (h.wallet === 'resell' ? 'Перекуп' : '🔄');
                     let colorClass = h.type === 'plus' ? 'val-plus' : (h.type === 'minus' ? 'val-minus' : 'val-plus');
                     let sign = h.type === 'plus' && !isPrivacyMode ? '+' : (h.type === 'minus' && !isPrivacyMode ? '-' : '');
                     
                     let extra = '';
-                    if(h.profitInfo) {
+                    if (h.profitInfo) {
                         let pColor = h.profitInfo.isWin ? 'var(--green)' : 'var(--red)';
                         let pSign = h.profitInfo.profit > 0 && !isPrivacyMode ? '+' : '';
                         extra = `<br><span style="font-size: 0.75rem; color: ${pColor}; font-weight: bold;">Маржа: ${pSign}${fmtMoney(h.profitInfo.profit)} ₽</span>`;

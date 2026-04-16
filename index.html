@@ -132,6 +132,18 @@
         <div style="text-align: right; font-size: 0.8rem; margin-top: 5px; color: var(--muted);" id="ui-exp-text">0 / 1000 XP</div>
     </div>
 
+    <div class="card" style="border: 1px dashed var(--primary); background: rgba(41, 128, 185, 0.02);">
+        <h2 style="border-bottom: none; margin-bottom: 5px;">💾 Резервная копия (Бэкап)</h2>
+        <p style="font-size: 0.8rem; color: var(--muted); margin-top: 0; margin-bottom: 15px; line-height: 1.4;">
+            Данные хранятся только на этом устройстве. Сохраняйте бэкап, чтобы не потерять прогресс при смене телефона.
+        </p>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="exportData()" style="flex: 1; background: var(--secondary); font-size: 0.9rem;">📥 Скачать</button>
+            <label for="import-file" style="flex: 1; text-align: center; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9rem; border: 1px solid var(--primary); color: var(--primary); box-sizing: border-box;">📤 Загрузить</label>
+            <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importData(event)">
+        </div>
+    </div>
+
     <div class="card">
         <h2>🎯 Новое задание</h2>
         <input type="text" id="new-goal" placeholder="Например: Прочитать 20 страниц">
@@ -168,7 +180,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
             <h2 style="margin: 0; border: none; padding: 0;">Статус Характеристик</h2>
             <select id="stats-period" onchange="updateUI()" style="width: auto; margin: 0; padding: 4px 8px; font-size: 0.85rem; border: none; font-weight: bold; background: transparent; color: var(--primary); cursor: pointer; outline: none;">
-                </select>
+            </select>
         </div>
         
         <div class="stats-grid">
@@ -403,6 +415,45 @@
         if(lvl < 5) return "Ранг: E (Новичок)"; if(lvl < 10) return "Ранг: D (Боец)";
         if(lvl < 20) return "Ранг: C (Ветеран)"; if(lvl < 30) return "Ранг: B (Мастер)";
         if(lvl < 50) return "Ранг: A (Элита)"; return "S-Ранг";
+    }
+
+    // НОВЫЕ ФУНКЦИИ ЭКСПОРТА И ИМПОРТА (БЭКАП)
+    function exportData() {
+        const dataStr = JSON.stringify(state);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = 'solo_system_backup_' + new Date().toISOString().slice(0,10) + '.json';
+        
+        let linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        showToast("Бэкап скачан! Сохраните его.");
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedState = JSON.parse(e.target.result);
+                if(importedState && importedState.profile && importedState.wallets) {
+                    state = { ...state, ...importedState };
+                    saveState();
+                    renderMonthPicker();
+                    renderStatsPeriodPicker();
+                    updateUI();
+                    showToast("Данные успешно восстановлены! 🎉");
+                } else {
+                    showToast("❌ Ошибка: Неверный формат файла");
+                }
+            } catch (err) {
+                showToast("❌ Ошибка чтения файла");
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
     }
 
     function switchTab(tab, el) {
@@ -907,7 +958,6 @@
                 <div style="font-size:0.8rem; font-weight:bold; color:var(--gold);">+${g.diff*15} XP</div>
             </div>`).join('');
 
-        // ЛЕТОПИСЬ: ОТРИСОВКА В ЗАВИСИМОСТИ ОТ ФИЛЬТРА
         let hl = document.getElementById('history-list');
         let hMonthCont = document.getElementById('history-month-container');
 

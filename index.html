@@ -29,7 +29,7 @@
             background: var(--bg); 
             color: var(--text); 
             padding-bottom: 80px; 
-            padding-top: 75px; /* Увеличен отступ, чтобы контент не прятался под панелью */
+            padding-top: 75px; 
             -webkit-user-select: none; 
             user-select: none; 
         }
@@ -39,10 +39,9 @@
             user-select: auto; 
         }
 
-        /* Верхняя панель (Часы, Приватность, Настройки) */
         .top-panel {
             position: fixed; 
-            top: 65px; /* Сдвинули вниз от системной шторки Телеграма */
+            top: 65px; 
             right: 15px; 
             display: flex; 
             gap: 8px; 
@@ -410,7 +409,7 @@
 
         #toast { 
             position: fixed; 
-            top: 75px; /* Сдвинуто вниз вместе с панелью кнопок */
+            top: 75px; 
             left: 50%; 
             transform: translateX(-50%); 
             background: var(--secondary); 
@@ -449,14 +448,14 @@
         </div>
 
         <div style="border-top: 1px solid #eee; padding-top: 15px;">
-            <div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 10px;">Резервное копирование</div>
+            <div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 10px;">Резервное копирование (Буфер)</div>
             <p style="font-size: 0.75rem; color: var(--muted); margin-top: 0; margin-bottom: 10px; line-height: 1.4;">
-                Данные хранятся только на этом устройстве. Скачивайте бэкап, чтобы не потерять прогресс при удалении.
+                Нажмите "Скопировать", чтобы скопировать все данные в виде текста. Сохраните его в Избранное Telegram. 
+                Чтобы восстановить на новом телефоне, нажмите "Вставить".
             </p>
             <div style="display: flex; gap: 10px;">
-                <button onclick="exportData()" style="flex: 1; background: var(--secondary); font-size: 0.85rem; padding: 10px;">Скачать</button>
-                <label for="import-file" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem; border: 1px solid var(--secondary); color: var(--secondary); box-sizing: border-box;">Загрузить</label>
-                <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importData(event)">
+                <button onclick="exportData()" style="flex: 1; background: var(--secondary); font-size: 0.85rem; padding: 10px;">📋 Скопировать</button>
+                <button onclick="importData()" style="flex: 1; background: transparent; border: 1px solid var(--secondary); color: var(--secondary); font-size: 0.85rem; padding: 10px;">📝 Вставить</button>
             </div>
         </div>
 
@@ -465,7 +464,7 @@
 </div>
 
 <div id="tab-hero" class="tab-content active">
-    <div class="card">
+    <div class="card" style="margin-top: 20px;">
         <div class="profile-head">
             <div>
                 <div class="name" id="ui-name">Игрок</div>
@@ -504,7 +503,7 @@
 </div>
 
 <div id="tab-stats" class="tab-content">
-    <div class="card">
+    <div class="card" style="margin-top: 20px;">
         <h2>⏱️ Учет времени</h2>
         <select id="act-stat">
             <option value="str">💪 Сила (Спорт, Зал)</option>
@@ -549,7 +548,7 @@
 </div>
 
 <div id="tab-finance" class="tab-content">
-    <div class="wallets">
+    <div class="wallets" style="margin-top: 20px;">
         <div class="wallet w-main">
             <div style="font-size: 0.8rem; opacity: 0.8;">Личная Касса</div>
             <div class="w-amount"><span id="w-main-val">0</span> ₽</div>
@@ -650,7 +649,7 @@
 </div>
 
 <div id="tab-assets" class="tab-content">
-    <div class="net-worth-box">
+    <div class="net-worth-box" style="margin-top: 20px;">
         <div style="font-size: 0.9rem; text-transform: uppercase; opacity: 0.9;">Реальный капитал (Net Worth)</div>
         <div class="net-worth-amount"><span id="total-net-worth">0</span> ₽</div>
         <div style="font-size: 0.75rem; margin-top: 10px; opacity: 0.8;">Кассы + Активы + Нам должны - Мы должны</div>
@@ -689,7 +688,7 @@
 </div>
 
 <div id="tab-history" class="tab-content">
-    <div class="card">
+    <div class="card" style="margin-top: 20px;">
         <h2>📜 История и Аналитика</h2>
         
         <input type="text" id="history-search" class="search-box" placeholder="Поиск по истории (напр. Бензин, Авто...)" oninput="updateUI()">
@@ -837,43 +836,37 @@
         showToast("Профиль сохранен");
     }
 
+    // НОВЫЙ БЭКАП ЧЕРЕЗ БУФЕР ОБМЕНА
     function exportData() {
         const dataStr = JSON.stringify(state);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        const exportFileDefaultName = 'solo_system_backup_' + new Date().toISOString().slice(0,10) + '.json';
-        
-        let linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri); 
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click(); 
-        showToast("Бэкап скачан!");
+        navigator.clipboard.writeText(dataStr).then(() => {
+            showToast("✅ Код скопирован! Вставьте его в Избранное.");
+        }).catch(err => {
+            // Запасной вариант для старых телефонов
+            prompt("Ваш браузер не поддерживает автокопирование. Скопируйте текст вручную:", dataStr);
+        });
     }
 
-    function importData(event) {
-        const file = event.target.files[0]; 
-        if (!file) return;
+    function importData() {
+        let pastedData = prompt("Вставьте скопированный код бэкапа сюда:");
+        if (!pastedData) return;
         
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const importedState = JSON.parse(e.target.result);
-                if (importedState && importedState.profile && importedState.wallets) {
-                    state = { ...state, ...importedState }; 
-                    saveState();
-                    renderMonthPicker(); 
-                    renderStatsPeriodPicker(); 
-                    updateUI(); 
-                    closeSettingsModal();
-                    showToast("Данные восстановлены! 🎉");
-                } else { 
-                    showToast("❌ Неверный формат"); 
-                }
-            } catch (err) { 
-                showToast("❌ Ошибка чтения файла"); 
+        try {
+            const importedState = JSON.parse(pastedData);
+            if (importedState && importedState.profile && importedState.wallets) {
+                state = { ...state, ...importedState }; 
+                saveState();
+                renderMonthPicker(); 
+                renderStatsPeriodPicker(); 
+                updateUI(); 
+                closeSettingsModal();
+                showToast("Данные успешно восстановлены! 🎉");
+            } else { 
+                showToast("❌ Ошибка: Неверный код"); 
             }
-        };
-        reader.readAsText(file); 
-        event.target.value = '';
+        } catch (err) { 
+            showToast("❌ Ошибка: Это не код бэкапа"); 
+        }
     }
 
     function getTitle(lvl) {

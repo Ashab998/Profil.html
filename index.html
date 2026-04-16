@@ -312,7 +312,14 @@
             <button class="filter-btn" onclick="setFilter('main', this)">Личная</button>
             <button class="filter-btn" onclick="setFilter('resell', this)">Перекуп</button>
             <button class="filter-btn" onclick="setFilter('transfer', this)">Переводы</button>
+            <button class="filter-btn" style="font-weight: bold; color: var(--purple);" onclick="setFilter('categories', this)">Категории</button>
         </div>
+        
+        <div id="history-month-container" style="display:none; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+            <span style="font-size: 0.8rem; color: var(--muted); text-transform: uppercase;">Структура за:</span>
+            <select id="history-month" onchange="updateUI()" style="width: auto; margin: 0; padding: 4px 8px; font-size: 0.85rem; border:none; font-weight: bold; background: transparent; color: var(--primary);"></select>
+        </div>
+
         <div id="history-list"></div>
     </div>
 </div>
@@ -667,7 +674,6 @@
     }
 
     function renderMonthPicker() {
-        let sel = document.getElementById('analytics-month');
         let months = new Set();
         let now = new Date();
         months.add(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`);
@@ -680,15 +686,21 @@
         });
 
         let arr = Array.from(months).sort().reverse();
-        let oldVal = sel.value;
-        sel.innerHTML = arr.map(m => {
+        let optionsHtml = arr.map(m => {
             let [y, mo] = m.split('-');
             let dName = new Date(y, mo - 1).toLocaleString('ru-RU', {month: 'long', year: 'numeric'});
             dName = dName.charAt(0).toUpperCase() + dName.slice(1);
             return `<option value="${m}">${dName}</option>`;
         }).join('');
         
-        if(arr.includes(oldVal)) sel.value = oldVal; else sel.value = arr[0];
+        ['analytics-month', 'history-month'].forEach(id => {
+            let sel = document.getElementById(id);
+            if(sel) {
+                let oldVal = sel.value;
+                sel.innerHTML = optionsHtml;
+                if(arr.includes(oldVal)) sel.value = oldVal; else sel.value = arr[0];
+            }
+        });
     }
 
     function renderStatsPeriodPicker() {
@@ -895,32 +907,85 @@
                 <div style="font-size:0.8rem; font-weight:bold; color:var(--gold);">+${g.diff*15} XP</div>
             </div>`).join('');
 
+        // ЛЕТОПИСЬ: ОТРИСОВКА В ЗАВИСИМОСТИ ОТ ФИЛЬТРА
         let hl = document.getElementById('history-list');
-        let fHistory = currentFilter !== 'all' ? state.history.filter(h => h.wallet === currentFilter) : state.history;
-        if(fHistory.length === 0) { hl.innerHTML = '<div style="text-align:center; color:#888; padding: 20px;">Пусто</div>'; } 
-        else {
-            hl.innerHTML = fHistory.map(h => {
-                let badge = h.wallet === 'main' ? 'Личн.' : (h.wallet === 'resell' ? 'Перекуп' : '🔄');
-                let colorClass = h.type === 'plus' ? 'val-plus' : (h.type === 'minus' ? 'val-minus' : 'val-plus');
-                let sign = h.type === 'plus' ? '+' : (h.type === 'minus' ? '-' : '');
-                
-                let extra = '';
-                if(h.profitInfo) {
-                    let pColor = h.profitInfo.isWin ? 'var(--green)' : 'var(--red)';
-                    extra = `<br><span style="font-size: 0.75rem; color: ${pColor}; font-weight: bold;">Маржа: ${h.profitInfo.profit > 0 ? '+' : ''}${h.profitInfo.profit} ₽</span>`;
-                }
+        let hMonthCont = document.getElementById('history-month-container');
 
-                return `
-                <div class="history-item ${h.amount === 0 ? 'h-zero' : ''}">
-                    <div class="h-info">
-                        <div>${h.text} <span style="font-size:0.7rem; color:var(--primary);">(${badge})</span></div>
-                        ${extra}
-                        <div class="h-date">${h.date}</div>
-                    </div>
-                    <div class="h-val ${colorClass}">${sign}${h.amount} ₽</div>
-                    ${(h.wallet !== 'transfer' && !h.profitInfo) ? `<div class="h-edit" onclick="editHistory(${h.id})">✏️</div>` : ''}
-                </div>`;
-            }).join('');
+        if (currentFilter === 'categories') {
+            hMonthCont.style.display = 'block';
+            let selMonth = document.getElementById('history-month').value;
+            let catTotals = {};
+            let totalExp = 0;
+
+            if (selMonth) {
+                let [y, m] = selMonth.split('-');
+                state.history.forEach(h => {
+                    if (h.wallet === 'main' && h.type === 'minus' && h.ts && !h.text.includes("[Отменено]")) {
+                        let d = new Date(h.ts);
+                        if (d.getFullYear() == y && (d.getMonth() + 1) == m) {
+                            totalExp += h.amount;
+                            let catMatch = h.text.match(/^\[(.*?)\]/);
+                            let cat = catMatch ? catMatch[1] : 'Прочее';
+                            catTotals[cat] = (catTotals[cat] || 0) + h.amount;
+                        }
+                    }
+                });
+            }
+
+            if (totalExp > 0) {
+                let catHtml = '';
+                let sortedCats = Object.keys(catTotals).sort((a, b) => catTotals[b] - catTotals[a]);
+                let catIcons = { 'Еда': '🍔', 'Авто': '🚗', 'Одежда': '👕', 'Прочее': '📦' };
+
+                sortedCats.forEach(c => {
+                    let amt = catTotals[c];
+                    let pct = Math.round((amt / totalExp) * 100);
+                    let icon = catIcons[c] || '📊';
+                    
+                    catHtml += `
+                    <div style="margin-bottom: 12px; padding: 12px; background: #fafafa; border-radius: 8px; border: 1px solid #eee;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 6px;">
+                            <span>${icon} <span style="font-weight:bold;">${c}</span> <span style="color:var(--muted); font-size:0.8rem; margin-left:5px;">${pct}%</span></span>
+                            <span style="font-weight:bold; color: var(--red);">${amt.toLocaleString()} ₽</span>
+                        </div>
+                        <div class="bar-bg" style="height: 6px; background: #e0e0e0; border-radius: 3px; overflow:hidden;">
+                            <div class="bar-fill" style="background: var(--red); width: ${pct}%; height: 100%;"></div>
+                        </div>
+                    </div>`;
+                });
+                catHtml += `<div style="text-align:right; font-size: 0.85rem; color: var(--muted); margin-top: 10px;">Всего расходов: <span style="font-weight:bold; color:var(--text);">${totalExp.toLocaleString()} ₽</span></div>`;
+                hl.innerHTML = catHtml;
+            } else {
+                hl.innerHTML = '<div style="text-align:center; color:#888; padding: 20px;">Нет расходов в выбранном месяце</div>';
+            }
+        } else {
+            hMonthCont.style.display = 'none';
+            let fHistory = currentFilter !== 'all' ? state.history.filter(h => h.wallet === currentFilter) : state.history;
+            if(fHistory.length === 0) { hl.innerHTML = '<div style="text-align:center; color:#888; padding: 20px;">Пусто</div>'; } 
+            else {
+                hl.innerHTML = fHistory.map(h => {
+                    let badge = h.wallet === 'main' ? 'Личн.' : (h.wallet === 'resell' ? 'Перекуп' : '🔄');
+                    let colorClass = h.type === 'plus' ? 'val-plus' : (h.type === 'minus' ? 'val-minus' : 'val-plus');
+                    let sign = h.type === 'plus' ? '+' : (h.type === 'minus' ? '-' : '');
+                    
+                    let extra = '';
+                    if(h.profitInfo) {
+                        let pColor = h.profitInfo.isWin ? 'var(--green)' : 'var(--red)';
+                        extra = `<br><span style="font-size: 0.75rem; color: ${pColor}; font-weight: bold;">Маржа: ${h.profitInfo.profit > 0 ? '+' : ''}${h.profitInfo.profit} ₽</span>`;
+                    }
+
+                    return `
+                    <div class="history-item ${h.amount === 0 ? 'h-zero' : ''}">
+                        <div class="h-info">
+                            <div>${h.text} <span style="font-size:0.7rem; color:var(--primary);">(${badge})</span></div>
+                            ${extra}
+                            <div class="h-date">${h.date}</div>
+                        </div>
+                        <div class="h-val ${colorClass}">${sign}${h.amount} ₽</div>
+                        ${(h.wallet !== 'transfer' && !h.profitInfo) ? `<div class="h-edit" onclick="editHistory(${h.id})">✏️</div>` : ''}
+                    </div>`;
+                }).join('');
+            }
         }
     }
 

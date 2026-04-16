@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Solo System</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
@@ -13,7 +13,8 @@
         }
 
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; padding-top: 10px; }
+        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; padding-top: 10px; -webkit-user-select: none; user-select: none; }
+        input, select, textarea { -webkit-user-select: auto; user-select: auto; }
 
         .system-clock {
             position: fixed; top: 15px; right: 15px;
@@ -60,7 +61,7 @@
         button:active { transform: scale(0.98); }
         .btn-green { background: var(--green); } .btn-gold { background: var(--gold); } .btn-gray { background: var(--muted); }
         .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
-        .edit-btn { background: transparent; color: var(--primary); padding: 0; width: auto; font-size: 1.2rem; }
+        .edit-btn { background: transparent; color: var(--primary); padding: 0; width: auto; font-size: 1.2rem; cursor: pointer; border: none; }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .stat-box { background: #f8f9fa; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #eee; }
@@ -327,7 +328,13 @@
 <script>
     if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
+        tg.ready();
         tg.expand();
+        try {
+            tg.setHeaderColor('#f4f7f6'); 
+            tg.setBackgroundColor('#f4f7f6');
+            if (tg.requestFullscreen) { tg.requestFullscreen(); }
+        } catch (e) {}
     }
 
     let state = {
@@ -563,18 +570,58 @@
         let idx = state.debts.findIndex(d => d.id === id);
         if(idx > -1) {
             let d = state.debts[idx];
-            if(confirm(`Погасить долг (${d.name} - ${d.amount} ₽)? Деньги будут проведены по кассе.`)) {
-                if(d.type === 'owe_me') {
-                    state.wallets.main += d.amount;
-                    addToHistory(`Погашение долга (от ${d.name})`, d.amount, 'plus', 'main');
-                } else {
-                    if(state.wallets.main < d.amount) return showToast("❌ Недостаточно средств для погашения!");
-                    state.wallets.main -= d.amount;
-                    addToHistory(`Погашение долга (для ${d.name})`, d.amount, 'minus', 'main');
-                }
-                state.debts.splice(idx, 1);
-                saveState(); updateUI(); showToast("Долг закрыт!");
+            let payAmount = prompt(`Погашение долга: ${d.name}\nОстаток: ${d.amount} ₽\nСколько вы хотите внести/получить сейчас?`, d.amount);
+            
+            if(payAmount === null || payAmount === "") return;
+            payAmount = parseInt(payAmount);
+            
+            if(isNaN(payAmount) || payAmount <= 0) return showToast("❌ Введите корректную сумму");
+            if(payAmount > d.amount) return showToast("❌ Сумма превышает остаток долга!");
+
+            let isFull = (payAmount === d.amount);
+            let histText = '';
+
+            if(d.type === 'owe_me') {
+                state.wallets.main += payAmount;
+                histText = isFull ? `Погашение долга (от ${d.name})` : `Частичный возврат долга (от ${d.name})`;
+                addToHistory(histText, payAmount, 'plus', 'main');
+            } else {
+                if(state.wallets.main < payAmount) return showToast("❌ Недостаточно средств для погашения!");
+                state.wallets.main -= payAmount;
+                histText = isFull ? `Погашение долга (для ${d.name})` : `Частичное погашение долга (для ${d.name})`;
+                addToHistory(histText, payAmount, 'minus', 'main');
             }
+            
+            d.amount -= payAmount;
+            if(d.amount === 0) {
+                state.debts.splice(idx, 1);
+                showToast("Долг полностью закрыт! 🎉");
+            } else {
+                showToast(`Внесено ${payAmount} ₽. Осталось: ${d.amount} ₽`);
+            }
+            saveState(); updateUI();
+        }
+    }
+
+    function editDebt(id) {
+        let idx = state.debts.findIndex(d => d.id === id);
+        if(idx > -1) {
+            let newVal = prompt(`Исправить остаток долга для ${state.debts[idx].name}:\n(Это просто изменит цифру без проведения по кассе)`, state.debts[idx].amount);
+            if(newVal !== null && newVal !== "") {
+                newVal = parseInt(newVal);
+                if(!isNaN(newVal) && newVal >= 0) {
+                    state.debts[idx].amount = newVal;
+                    if(newVal === 0) state.debts.splice(idx, 1);
+                    saveState(); updateUI(); showToast("Долг обновлен");
+                }
+            }
+        }
+    }
+
+    function deleteDebt(id) {
+        if(confirm("Вы уверены, что хотите удалить эту запись о долге? (Деньги в кассе не изменятся)")) {
+            state.debts = state.debts.filter(d => d.id !== id);
+            saveState(); updateUI(); showToast("Долг удален");
         }
     }
 
@@ -695,7 +742,6 @@
         document.getElementById('ui-exp-bar').style.width = (state.exp / needed * 100) + '%';
         document.getElementById('ui-exp-text').innerText = `${state.exp} / ${needed} XP`;
 
-        // ФИЛЬТР ВРЕМЕНИ ДЛЯ ХАРАКТЕРИСТИК
         let period = document.getElementById('stats-period').value;
         let displayStats = { str: 0, int: 0, vit: 0, agi: 0 };
         
@@ -806,16 +852,27 @@
         let dList = document.getElementById('debts-list');
         if(state.debts.length === 0) dList.innerHTML = '<div style="color:#888; font-size:0.85rem;">Активных долгов нет</div>';
         else dList.innerHTML = state.debts.map(d => {
-            let isOweMe = d.type === 'owe_me'; let color = isOweMe ? 'var(--green)' : 'var(--red)'; let label = isOweMe ? 'Мне должны' : 'Я должен';
+            let isOweMe = d.type === 'owe_me'; 
+            let color = isOweMe ? 'var(--green)' : 'var(--red)'; 
+            let badgeText = isOweMe ? '⬇️ ДОЛЖНИК' : '⬆️ КРЕДИТОР'; 
+            let actionText = isOweMe ? 'Взыскать' : 'Погасить';
+            let dateText = (d.dueDate && d.dueDate !== "Без срока") ? `Срок: ${d.dueDate}` : "Бессрочно";
+
             return `
-            <div class="list-item" style="border-left: 3px solid ${color};">
-                <div class="item-info">
-                    <div style="font-size:0.75rem; color:${color}; font-weight:bold;">${label}</div>
-                    <div style="font-weight:bold;">${d.name}</div>
-                    <div style="font-size:0.75rem; color:var(--muted);">До: ${d.dueDate}</div>
+            <div class="card" style="border-left: 4px solid ${color}; padding: 15px; margin-bottom: 10px; background: #fafafa; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 0.75rem; font-weight: bold; color: ${color}; background: ${isOweMe ? 'rgba(39, 174, 96, 0.1)' : 'rgba(231, 76, 60, 0.1)'}; padding: 3px 8px; border-radius: 12px;">${badgeText}</span>
+                    <span style="font-size: 0.75rem; color: var(--muted);">${dateText}</span>
                 </div>
-                <div style="font-weight:bold; font-size:1.1rem; margin-right: 15px;">${d.amount.toLocaleString()} ₽</div>
-                <button class="btn-outline" style="width:auto; padding:5px 10px; font-size:0.8rem; border-color:${color}; color:${color};" onclick="resolveDebt(${d.id})">Погасить</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div style="font-weight: bold; font-size: 1.1rem; color: var(--text);">${d.name}</div>
+                    <div style="font-weight: bold; font-size: 1.3rem; color: ${color};">${d.amount.toLocaleString()} ₽</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 10px;">
+                    <button class="btn-outline" style="flex: 1; padding: 8px; font-size: 0.85rem; border-color: ${color}; color: ${color};" onclick="resolveDebt(${d.id})">${actionText}</button>
+                    <button class="edit-btn" style="background: #eee; border-radius: 8px; padding: 0 15px; font-size: 1rem; color: var(--secondary);" onclick="editDebt(${d.id})">✏️</button>
+                    <button class="edit-btn" style="background: #eee; border-radius: 8px; padding: 0 15px; font-size: 1rem; color: var(--red);" onclick="deleteDebt(${d.id})">🗑️</button>
+                </div>
             </div>`;
         }).join('');
 

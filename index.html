@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solo System</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --primary: #2980b9; --secondary: #34495e; --bg: #f4f7f6; --card: #ffffff;
+            --text: #2c3e50; --muted: #7f8c8d; --green: #27ae60; --red: #e74c3c;
+            --gold: #f39c12; --purple: #8e44ad; --glass: rgba(255, 255, 255, 0.95);
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; padding-top: 10px; }
+
+        /* Системные часы - Ультра прозрачные */
+        .system-clock {
+            position: fixed; top: 15px; right: 15px;
+            background: rgba(255, 255, 255, 0.15); 
+            backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+            padding: 4px 10px; border-radius: 20px;
+            font-family: 'Courier New', monospace; font-weight: bold;
+            color: rgba(41, 128, 185, 0.6); 
+            box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+            border: 1px solid rgba(41, 128, 185, 0.1);
+            font-size: 0.85rem; z-index: 2500; pointer-events: none; 
+        }
+
+        .bottom-nav {
+            position: fixed; bottom: 0; width: 100%; background: var(--card);
+            display: flex; justify-content: space-around; padding: 8px 0;
+            box-shadow: 0 -2px 15px rgba(0,0,0,0.05); z-index: 1000;
+        }
+        .nav-item {
+            flex: 1; text-align: center; color: var(--muted); cursor: pointer;
+            font-size: 0.75rem; font-weight: 600; padding: 5px 0; transition: 0.3s;
+        }
+        .nav-item .icon { font-size: 1.3rem; display: block; margin-bottom: 2px; }
+        .nav-item.active { color: var(--primary); transform: translateY(-3px); }
+
+        .tab-content { display: none; padding: 15px; max-width: 600px; margin: 0 auto; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        h2 { margin: 0 0 15px 0; font-size: 1.1rem; color: var(--secondary); border-bottom: 1px solid #eee; padding-bottom: 8px; }
+
+        .profile-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .name { font-size: 1.6rem; font-weight: bold; color: var(--primary); }
+        .title { font-size: 0.9rem; color: var(--gold); font-weight: bold; }
+        .params { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--muted); background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        .bar-bg { width: 100%; height: 12px; background: #ecf0f1; border-radius: 6px; overflow: hidden; margin-top: 5px; }
+        .bar-fill { height: 100%; background: linear-gradient(90deg, #3498db, #2980b9); transition: width 0.4s ease; }
+
+        input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #dfe6e9; border-radius: 8px; font-size: 1rem; background: #fafafa; }
+        input[type="range"] { padding: 0; }
+        input:focus { outline: none; border-color: var(--primary); }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--primary); color: white; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.98); }
+        .btn-green { background: var(--green); } .btn-gold { background: var(--gold); } .btn-gray { background: var(--muted); }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        .edit-btn { background: transparent; color: var(--primary); padding: 0; width: auto; font-size: 1.2rem; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-box { background: #f8f9fa; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #eee; }
+        .stat-icon { font-size: 1.5rem; margin-bottom: 5px; }
+        .stat-name { font-weight: bold; font-size: 0.9rem; margin-bottom: 5px; }
+        .stat-hours { color: var(--primary); font-weight: bold; font-size: 1.1rem; }
+
+        .list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; background: #fafafa; border-radius: 8px; margin-bottom: 8px;}
+        .item-info { flex: 1; }
+        .done { opacity: 0.6; background: #f0f0f0; } .done span { text-decoration: line-through; color: var(--muted); }
+
+        .wallets { display: flex; gap: 10px; margin-bottom: 15px; }
+        .wallet { flex: 1; padding: 15px; border-radius: 12px; color: white; text-align: center; overflow: hidden; }
+        .w-main { background: linear-gradient(135deg, #2c3e50, #34495e); }
+        .w-resell { background: linear-gradient(135deg, #8e44ad, #9b59b6); }
+        .w-amount { font-size: 1.3rem; font-weight: bold; margin-top: 5px; }
+
+        .analytics-box { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
+        .analytics-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; align-items: center; }
+        .text-green { color: var(--green); font-weight: bold; } .text-red { color: var(--red); font-weight: bold; }
+        .text-purple { color: var(--purple); font-weight: bold; }
+        .net-worth-box { background: linear-gradient(135deg, #16a085, #2ecc71); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);}
+        .net-worth-amount { font-size: 2rem; font-weight: bold; margin-top: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        .filters { display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
+        .filter-btn { flex: 1; padding: 8px; font-size: 0.8rem; background: #eee; color: var(--text); border-radius: 20px; white-space: nowrap; }
+        .filter-btn.active { background: var(--primary); color: white; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .h-info { flex: 1; } .h-date { font-size: 0.75rem; color: var(--muted); margin-top:3px;}
+        .h-val { font-weight: bold; margin-right: 10px; text-align: right;}
+        .val-plus { color: var(--green); } .val-minus { color: var(--red); }
+        .h-zero { opacity: 0.5; }
+
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+        .modal { background: white; padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto;}
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--secondary); color: white; padding: 12px 24px; border-radius: 30px; z-index: 3000; font-weight: bold; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center;}
+    </style>
+</head>
+<body>
+
+<div id="system-clock" class="system-clock">00:00:00</div>
+
+<div id="toast">Уведомление</div>
+
+<div class="modal-overlay" id="edit-profile-modal" style="display: none;">
+    <div class="modal">
+        <h2 style="text-align: center; color: var(--primary);">Параметры Героя</h2>
+        <input type="text" id="edit-name" placeholder="Имя">
+        <input type="number" id="edit-age" placeholder="Возраст (лет)">
+        <input type="number" id="edit-height" placeholder="Рост (см)">
+        <input type="number" id="edit-weight" placeholder="Вес (кг)">
+        <button onclick="saveProfile()">Сохранить изменения</button>
+        <button class="btn-gray" style="margin-top: 10px;" onclick="closeProfileModal()">Отмена</button>
+    </div>
+</div>
+
+<div id="tab-hero" class="tab-content active">
+    <div class="card">
+        <div class="profile-head">
+            <div><div class="name" id="ui-name">Игрок</div><div class="title" id="ui-title">Ранг: E</div></div>
+            <div style="text-align: right;"><div style="font-size: 1.4rem; font-weight: bold; color: var(--primary);">LVL <span id="ui-lvl">1</span></div></div>
+        </div>
+        <div class="params">
+            <div><span id="ui-age">25</span> лет | <span id="ui-height">180</span> см | <span id="ui-weight">75</span> кг</div>
+            <button class="edit-btn" onclick="openProfileModal()">✏️</button>
+        </div>
+        <div class="bar-bg"><div class="bar-fill" id="ui-exp-bar"></div></div>
+        <div style="text-align: right; font-size: 0.8rem; margin-top: 5px; color: var(--muted);" id="ui-exp-text">0 / 1000 XP</div>
+    </div>
+
+    <div class="card">
+        <h2>🎯 Новое задание</h2>
+        <input type="text" id="new-goal" placeholder="Например: Прочитать 20 страниц">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <span style="font-size: 0.85rem; color: var(--muted);">Сложность:</span>
+            <input type="range" id="goal-diff" min="1" max="10" value="5" oninput="document.getElementById('diff-val').innerText = this.value" style="flex:1;">
+            <span id="diff-val" style="font-weight: bold; width: 20px; text-align: center;">5</span>
+        </div>
+        <button class="btn-green" onclick="addGoal()">Добавить задание</button>
+    </div>
+
+    <div class="card">
+        <h2>📋 Активные задания</h2>
+        <div id="active-goals-list"></div>
+        <button class="btn-gray" style="margin-top: 15px; font-size: 0.85rem; padding: 8px;" onclick="toggleArchive()">📁 Показать/Скрыть архив</button>
+        <div id="completed-goals-list" style="display: none; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;"></div>
+    </div>
+</div>
+
+<div id="tab-stats" class="tab-content">
+    <div class="card">
+        <h2>⏱️ Учет времени</h2>
+        <select id="act-stat">
+            <option value="str">💪 Сила (Спорт, Зал)</option>
+            <option value="int">🧠 Интеллект (Учеба, Чтение)</option>
+            <option value="vit">❤️ Живучесть (Сон, Восстановление)</option>
+            <option value="agi">⚡ Ловкость (Бег, Растяжка)</option>
+        </select>
+        <input type="number" id="act-time" placeholder="Потрачено минут (напр. 60)">
+        <button onclick="logActivity()">Зафиксировать прогресс</button>
+    </div>
+    <div class="card">
+        <h2>Статус Характеристик</h2>
+        <div class="stats-grid">
+            <div class="stat-box"><div class="stat-icon">💪</div><div class="stat-name">СИЛА</div><div class="stat-hours"><span id="st-str">0</span> ч</div></div>
+            <div class="stat-box"><div class="stat-icon">🧠</div><div class="stat-name">УМ</div><div class="stat-hours"><span id="st-int">0</span> ч</div></div>
+            <div class="stat-box"><div class="stat-icon">❤️</div><div class="stat-name">ЖИВУЧЕСТЬ</div><div class="stat-hours"><span id="st-vit">0</span> ч</div></div>
+            <div class="stat-box"><div class="stat-icon">⚡</div><div class="stat-name">ЛОВКОСТЬ</div><div class="stat-hours"><span id="st-agi">0</span> ч</div></div>
+        </div>
+    </div>
+</div>
+
+<div id="tab-finance" class="tab-content">
+    <div class="wallets">
+        <div class="wallet w-main">
+            <div style="font-size: 0.8rem; opacity: 0.8;">Личная Касса</div>
+            <div class="w-amount"><span id="w-main-val">0</span> ₽</div>
+        </div>
+        <div class="wallet w-resell">
+            <div style="font-size: 0.8rem; opacity: 0.8;">Касса Перекупа</div>
+            <div class="w-amount"><span id="w-resell-val">0</span> ₽</div>
+        </div>
+    </div>
+
+    <div class="card" style="background: #f8f9fa; border: 1px dashed #bdc3c7;">
+        <h2 style="font-size: 1rem;">🔄 Трансфер между кассами</h2>
+        <div style="display: flex; gap: 10px;">
+            <select id="transfer-dir" style="flex: 1.5; margin-bottom:0;">
+                <option value="m2r">Личная ➔ Перекуп</option>
+                <option value="r2m">Перекуп ➔ Личная</option>
+            </select>
+            <input type="number" id="transfer-amount" placeholder="Сумма" style="flex: 1; margin-bottom:0;">
+            <button style="background: #7f8c8d; width: auto; padding: 0 15px;" onclick="executeTransfer()">➔</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>💳 Личные финансы</h2>
+        <div class="analytics-box">
+            <div class="analytics-row" style="border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px;">
+                <span style="font-size: 0.8rem; color: var(--muted); text-transform: uppercase;">Аналитика за:</span>
+                <select id="analytics-month" onchange="updateUI()" style="width: auto; margin: 0; padding: 4px 8px; font-size: 0.85rem; border:none; font-weight: bold; background: transparent; color: var(--primary);"></select>
+            </div>
+            <div class="analytics-row"><span>Поступления (Жизнь):</span> <span class="text-green" id="month-income">0 ₽</span></div>
+            <div class="analytics-row"><span>Расходы (Жизнь):</span> <span class="text-red" id="month-expense">0 ₽</span></div>
+            <div class="analytics-row"><span>Прибыль с Перекупа:</span> <span class="text-purple" id="month-resell">0 ₽</span></div>
+            <div class="analytics-row" style="border-top: 1px solid #ddd; padding-top: 8px; margin-top: 5px;">
+                <span>Итог месяца (Сальдо):</span> <span id="month-total" style="font-weight: bold;">0 ₽</span>
+            </div>
+            <div class="analytics-row" style="border: none; margin-top: 5px;">
+                <span style="font-size:0.75rem; color:var(--muted);">Переводы в бизнес за месяц: <span id="month-transfers">0</span> ₽</span>
+            </div>
+        </div>
+
+        <select id="fin-type" onchange="toggleFinCat()">
+            <option value="expense">➖ Трата (Расход)</option>
+            <option value="income">➕ Пополнение (Доход)</option>
+        </select>
+        <select id="fin-cat">
+            <option value="Еда">🍔 Еда</option>
+            <option value="Авто">🚗 Авто</option>
+            <option value="Одежда">👕 Одежда</option>
+            <option value="Прочее">📦 Прочее</option>
+        </select>
+        <input type="text" id="fin-desc" placeholder="Описание (Зарплата, Магазин...)">
+        <input type="number" id="fin-amount" placeholder="Сумма (₽)">
+        <button onclick="logFinance()">Внести запись</button>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--purple);">
+        <h2>📦 Бизнес / Перекуп</h2>
+        <div class="analytics-box">
+            <div style="font-size: 0.8rem; color: var(--muted); margin-bottom: 5px; text-transform: uppercase;">Статистика сделок (За всё время)</div>
+            <div class="analytics-row"><span>Чистая прибыль:</span> <span id="resell-net-profit">0 ₽</span></div>
+            <div class="analytics-row"><span>Вложено в товары:</span> <span id="resell-invested">0 ₽</span></div>
+            <div class="analytics-row" style="border:none; padding-top:0;">
+                <span>Успешных: <span class="text-green" id="resell-wins">0</span></span>
+                <span>Убыточных: <span class="text-red" id="resell-losses">0</span></span>
+            </div>
+        </div>
+        <select id="resell-mode" onchange="toggleResellMode()">
+            <option value="buy">📥 Покупка товара (Вложение)</option>
+            <option value="sell">📤 Продажа товара (Сделка)</option>
+        </select>
+        <div id="resell-buy-form">
+            <input type="text" id="resell-buy-item" placeholder="Название товара (Например: iPhone 14)">
+            <input type="number" id="resell-buy-amount" placeholder="Закупочная цена (₽)">
+            <button class="btn-gold" onclick="buyResellItem()">Купить на склад</button>
+        </div>
+        <div id="resell-sell-form" style="display: none;">
+            <select id="resell-inventory-list"></select>
+            <input type="number" id="resell-sell-amount" placeholder="Сумма продажи (₽)">
+            <button class="btn-green" onclick="sellResellItem()">Продать и зафиксировать прибыль</button>
+        </div>
+    </div>
+</div>
+
+<div id="tab-assets" class="tab-content">
+    <div class="net-worth-box">
+        <div style="font-size: 0.9rem; text-transform: uppercase; opacity: 0.9;">Реальный капитал (Net Worth)</div>
+        <div class="net-worth-amount"><span id="total-net-worth">0</span> ₽</div>
+        <div style="font-size: 0.75rem; margin-top: 10px; opacity: 0.8;">Кассы + Активы + Нам должны - Мы должны</div>
+    </div>
+
+    <div class="card">
+        <h2>🚗 Личные Активы</h2>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="asset-name" placeholder="Авто, ПК..." style="flex: 1.5; margin-bottom: 10px;">
+            <input type="number" id="asset-value" placeholder="Оценка (₽)" style="flex: 1; margin-bottom: 10px;">
+        </div>
+        <button class="btn-outline" onclick="addAsset()">Добавить актив</button>
+        <div id="assets-list" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--primary);">
+        <h2>🤝 Учет Долгов</h2>
+        <select id="debt-type">
+            <option value="owe_me">🟢 Я дал в долг (Мне должны)</option>
+            <option value="i_owe">🔴 Я взял в долг (Я должен)</option>
+        </select>
+        <input type="text" id="debt-name" placeholder="Имя человека или организации">
+        <input type="number" id="debt-amount" placeholder="Сумма (₽)">
+        <input type="date" id="debt-date" style="color: var(--muted);">
+        
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <input type="checkbox" id="debt-is-old" style="width: 20px; height: 20px; margin: 0; accent-color: var(--primary);">
+            <label for="debt-is-old" style="font-size: 0.85rem; color: var(--muted); line-height: 1.2;">Это старый долг (просто добавить в список без списания с кассы)</label>
+        </div>
+
+        <button onclick="addDebt()">Оформить долг</button>
+        
+        <h3 style="font-size: 1rem; margin: 20px 0 10px; color: var(--secondary); border-bottom: 1px solid #eee; padding-bottom: 5px;">Активные долги</h3>
+        <div id="debts-list"></div>
+    </div>
+</div>
+
+<div id="tab-history" class="tab-content">
+    <div class="card">
+        <h2>📜 История операций</h2>
+        <div class="filters">
+            <button class="filter-btn active" onclick="setFilter('all', this)">Все</button>
+            <button class="filter-btn" onclick="setFilter('main', this)">Личная</button>
+            <button class="filter-btn" onclick="setFilter('resell', this)">Перекуп</button>
+            <button class="filter-btn" onclick="setFilter('transfer', this)">Переводы</button>
+        </div>
+        <div id="history-list"></div>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('hero', this)"><span class="icon">👤</span>Герой</div>
+    <div class="nav-item" onclick="switchTab('stats', this)"><span class="icon">⚡</span>Навыки</div>
+    <div class="nav-item" onclick="switchTab('finance', this)"><span class="icon">💰</span>Казна</div>
+    <div class="nav-item" onclick="switchTab('assets', this)"><span class="icon">🏦</span>Капитал</div>
+    <div class="nav-item" onclick="switchTab('history', this)"><span class="icon">📜</span>Летопись</div>
+</div>
+
+<script>
+    // Интеграция с Telegram Web App (разворачивает приложение на весь экран)
+    if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+    }
+
+    let state = {
+        profile: { name: "Игрок", age: 0, height: 0, weight: 0 },
+        lvl: 1, exp: 0,
+        wallets: { main: 0, resell: 0 },
+        stats: { str: 0, int: 0, vit: 0, agi: 0 },
+        activeGoals: [], completedGoals: [],
+        resell: { activeItems: [], totalProfit: 0, winDeals: 0, lossDeals: 0 },
+        assets: [], debts: [], history: []
+    };
+    let currentFilter = 'all';
+
+    function updateClock() {
+        let now = new Date();
+        let h = String(now.getHours()).padStart(2, '0');
+        let m = String(now.getMinutes()).padStart(2, '0');
+        let s = String(now.getSeconds()).padStart(2, '0');
+        document.getElementById('system-clock').innerText = `${h}:${m}:${s}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function loadState() {
+        let saved = localStorage.getItem('soloSystemDataV5');
+        if(saved) {
+            let parsed = JSON.parse(saved);
+            state = { ...state, ...parsed };
+            if(!state.assets) state.assets = []; if(!state.debts) state.debts = [];
+            if(!state.resell) state.resell = { activeItems: [], totalProfit: 0, winDeals: 0, lossDeals: 0 };
+        } else {
+            document.getElementById('edit-profile-modal').style.display = 'flex';
+        }
+        renderMonthPicker();
+        updateUI();
+    }
+
+    function saveState() { localStorage.setItem('soloSystemDataV5', JSON.stringify(state)); }
+
+    function showToast(msg) {
+        let t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    function openProfileModal() { document.getElementById('edit-profile-modal').style.display = 'flex'; }
+    function closeProfileModal() { document.getElementById('edit-profile-modal').style.display = 'none'; }
+    function saveProfile() {
+        state.profile.name = document.getElementById('edit-name').value || "Игрок";
+        state.profile.age = document.getElementById('edit-age').value || 0;
+        state.profile.height = document.getElementById('edit-height').value || 0;
+        state.profile.weight = document.getElementById('edit-weight').value || 0;
+        closeProfileModal(); saveState(); updateUI(); showToast("Профиль сохранен");
+    }
+
+    function getTitle(lvl) {
+        if(lvl < 5) return "Ранг: E (Новичок)"; if(lvl < 10) return "Ранг: D (Боец)";
+        if(lvl < 20) return "Ранг: C (Ветеран)"; if(lvl < 30) return "Ранг: B (Мастер)";
+        if(lvl < 50) return "Ранг: A (Элита)"; return "S-Ранг";
+    }
+
+    function switchTab(tab, el) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        el.classList.add('active');
+    }
+
+    function logActivity() {
+        let stat = document.getElementById('act-stat').value; let mins = parseInt(document.getElementById('act-time').value);
+        if(!mins || mins <= 0) return showToast("Укажи время!");
+        state.stats[stat] += mins; let expGain = mins * 10; state.exp += expGain; checkLevelUp();
+        showToast(`+${expGain} XP!`); document.getElementById('act-time').value = ''; saveState(); updateUI();
+    }
+    function checkLevelUp() {
+        let needed = state.lvl * 1000;
+        if(state.exp >= needed) { state.exp -= needed; state.lvl++; showToast(`🎉 УРОВЕНЬ ПОВЫШЕН ДО ${state.lvl}!`); }
+    }
+    function addGoal() {
+        let text = document.getElementById('new-goal').value; let diff = parseInt(document.getElementById('goal-diff').value);
+        if(!text) return showToast("Введите текст!");
+        state.activeGoals.push({ id: Date.now(), text, diff });
+        document.getElementById('new-goal').value = ''; saveState(); updateUI();
+    }
+    function confirmGoal(id) {
+        if(confirm("Выполнил?")) {
+            let i = state.activeGoals.findIndex(x => x.id === id);
+            if(i > -1) {
+                let g = state.activeGoals[i]; let rew = g.diff * 15; state.exp += rew;
+                state.completedGoals.unshift(g); state.activeGoals.splice(i, 1);
+                showToast(`+${rew} XP`); checkLevelUp(); saveState(); updateUI();
+            }
+        }
+    }
+    function toggleArchive() {
+        let a = document.getElementById('completed-goals-list'); a.style.display = a.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function toggleFinCat() {
+        document.getElementById('fin-cat').style.display = document.getElementById('fin-type').value === 'expense' ? 'block' : 'none';
+    }
+    function logFinance() {
+        let type = document.getElementById('fin-type').value;
+        let amount = parseInt(document.getElementById('fin-amount').value);
+        if(!amount || amount <= 0) return showToast("Укажи сумму!");
+        
+        if(type === 'expense' && state.wallets.main < amount) return showToast("❌ Недостаточно средств в Личной кассе!");
+
+        let cat = type === 'expense' ? `[${document.getElementById('fin-cat').value}] ` : "";
+        let desc = document.getElementById('fin-desc').value;
+        let text = cat + (desc || (type === 'expense' ? "Трата" : "Пополнение"));
+
+        if(type === 'income') state.wallets.main += amount; else state.wallets.main -= amount;
+        
+        addToHistory(text, amount, type === 'income' ? 'plus' : 'minus', "main");
+        document.getElementById('fin-amount').value = ''; document.getElementById('fin-desc').value = '';
+        renderMonthPicker(); showToast("Записано"); saveState(); updateUI();
+    }
+
+    function toggleResellMode() {
+        let mode = document.getElementById('resell-mode').value;
+        document.getElementById('resell-buy-form').style.display = mode === 'buy' ? 'block' : 'none';
+        document.getElementById('resell-sell-form').style.display = mode === 'sell' ? 'block' : 'none';
+    }
+
+    function buyResellItem() {
+        let name = document.getElementById('resell-buy-item').value;
+        let cost = parseInt(document.getElementById('resell-buy-amount').value);
+        if(!name || !cost || cost <= 0) return showToast("Укажите данные!");
+        
+        if(state.wallets.resell < cost) return showToast("❌ Недостаточно средств в кассе Перекупа!");
+
+        state.resell.activeItems.push({ id: Date.now(), name, cost, date: new Date().getTime() });
+        state.wallets.resell -= cost;
+        addToHistory(`Покупка: ${name}`, cost, 'minus', 'resell');
+        document.getElementById('resell-buy-item').value = ''; document.getElementById('resell-buy-amount').value = '';
+        showToast("Товар на складе"); saveState(); updateUI();
+    }
+
+    function sellResellItem() {
+        let id = document.getElementById('resell-inventory-list').value;
+        let sellPrice = parseInt(document.getElementById('resell-sell-amount').value);
+        if(!id || !sellPrice || sellPrice <= 0) return showToast("Укажите сумму продажи!");
+
+        let idx = state.resell.activeItems.findIndex(x => x.id == id);
+        if(idx > -1) {
+            let item = state.resell.activeItems[idx];
+            let profit = sellPrice - item.cost;
+            state.resell.totalProfit += profit;
+            if(profit >= 0) state.resell.winDeals++; else state.resell.lossDeals++;
+            state.wallets.resell += sellPrice;
+            state.resell.activeItems.splice(idx, 1);
+            addToHistory(`Продажа: ${item.name}`, sellPrice, 'plus', 'resell', { profit, isWin: profit >= 0 });
+            document.getElementById('resell-sell-amount').value = '';
+            showToast(profit >= 0 ? `ПЛЮС: ${profit} ₽` : `УБЫТОК: ${profit} ₽`); saveState(); updateUI();
+        }
+    }
+
+    function executeTransfer() {
+        let dir = document.getElementById('transfer-dir').value;
+        let amount = parseInt(document.getElementById('transfer-amount').value);
+        if(!amount || amount <= 0) return showToast("Укажите сумму!");
+
+        if(dir === 'm2r') {
+            if(state.wallets.main < amount) return showToast("❌ Мало средств в Личной кассе!");
+            state.wallets.main -= amount; state.wallets.resell += amount;
+            addToHistory(`Перевод в Перекуп`, amount, 'transfer', 'transfer');
+        } else {
+            if(state.wallets.resell < amount) return showToast("❌ Мало средств в Перекупе!");
+            state.wallets.resell -= amount; state.wallets.main += amount;
+            addToHistory(`Вывод из Перекупа`, amount, 'transfer', 'transfer');
+        }
+        document.getElementById('transfer-amount').value = ''; showToast("Переведено"); renderMonthPicker(); saveState(); updateUI();
+    }
+
+    function addAsset() {
+        let name = document.getElementById('asset-name').value; let val = parseInt(document.getElementById('asset-value').value);
+        if(!name || !val || val <= 0) return showToast("Укажите название и цену");
+        state.assets.push({ id: Date.now(), name, value: val });
+        document.getElementById('asset-name').value = ''; document.getElementById('asset-value').value = '';
+        saveState(); updateUI(); showToast("Актив добавлен");
+    }
+    function updateAsset(id) {
+        let idx = state.assets.findIndex(a => a.id === id);
+        if(idx > -1) {
+            let newVal = prompt(`Новая оценка для ${state.assets[idx].name}:`, state.assets[idx].value);
+            if(newVal && !isNaN(parseInt(newVal))) { state.assets[idx].value = parseInt(newVal); saveState(); updateUI(); }
+        }
+    }
+    function deleteAsset(id) { if(confirm("Удалить актив?")) { state.assets = state.assets.filter(a => a.id !== id); saveState(); updateUI(); } }
+
+    function addDebt() {
+        let type = document.getElementById('debt-type').value;
+        let name = document.getElementById('debt-name').value;
+        let amount = parseInt(document.getElementById('debt-amount').value);
+        let due = document.getElementById('debt-date').value || "Без срока";
+        let isOld = document.getElementById('debt-is-old').checked;
+
+        if(!name || !amount || amount <= 0) return showToast("Заполни поля долга!");
+        
+        if (!isOld) {
+            if(type === 'owe_me') {
+                if(state.wallets.main < amount) return showToast("❌ Нет столько средств в Личной кассе!");
+                state.wallets.main -= amount;
+                addToHistory(`Дал в долг: ${name}`, amount, 'minus', 'main');
+            } else {
+                state.wallets.main += amount;
+                addToHistory(`Взял в долг у: ${name}`, amount, 'plus', 'main');
+            }
+        }
+
+        state.debts.push({ id: Date.now(), name, type, amount, dueDate: due });
+        document.getElementById('debt-name').value = ''; document.getElementById('debt-amount').value = '';
+        document.getElementById('debt-is-old').checked = false;
+        saveState(); updateUI(); showToast("Долг оформлен");
+    }
+
+    function resolveDebt(id) {
+        let idx = state.debts.findIndex(d => d.id === id);
+        if(idx > -1) {
+            let d = state.debts[idx];
+            if(confirm(`Погасить долг (${d.name} - ${d.amount} ₽)? Деньги будут проведены по кассе.`)) {
+                if(d.type === 'owe_me') {
+                    state.wallets.main += d.amount;
+                    addToHistory(`Погашение долга (от ${d.name})`, d.amount, 'plus', 'main');
+                } else {
+                    if(state.wallets.main < d.amount) return showToast("❌ Недостаточно средств для погашения!");
+                    state.wallets.main -= d.amount;
+                    addToHistory(`Погашение долга (для ${d.name})`, d.amount, 'minus', 'main');
+                }
+                state.debts.splice(idx, 1);
+                saveState(); updateUI(); showToast("Долг закрыт!");
+            }
+        }
+    }
+
+    function addToHistory(text, amount, type, wallet, profitInfo = null) {
+        let now = new Date();
+        let dateStr = now.toLocaleString('ru-RU', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'});
+        state.history.unshift({ id: Date.now(), text, amount, type, wallet, date: dateStr, ts: now.getTime(), profitInfo });
+    }
+    
+    function editHistory(id) {
+        let item = state.history.find(h => h.id === id);
+        if(!item || item.wallet === 'transfer') return showToast("Переводы не редактируются");
+        if(item.profitInfo) return showToast("Сделки продажи закреплены");
+        
+        let newAmount = prompt(`Изменить сумму (0 для отмены):\n${item.text}`, item.amount);
+        if(newAmount !== null && newAmount !== "") {
+            newAmount = parseInt(newAmount);
+            if(isNaN(newAmount) || newAmount < 0) return showToast("Ошибка");
+            let diff = newAmount - item.amount;
+            
+            if(item.type === 'plus') state.wallets[item.wallet] += diff; else state.wallets[item.wallet] -= diff; 
+            
+            if(state.wallets[item.wallet] < 0) {
+                if(item.type === 'plus') state.wallets[item.wallet] -= diff; else state.wallets[item.wallet] += diff; 
+                return showToast("❌ Эта правка уведет баланс в минус!");
+            }
+
+            if(item.wallet === 'resell' && item.type === 'minus') {
+                let itemName = item.text.replace("Покупка: ", "");
+                let actItem = state.resell.activeItems.find(x => x.name === itemName && x.cost === item.amount);
+                if(actItem) actItem.cost = newAmount;
+            }
+
+            item.amount = newAmount;
+            if(newAmount === 0 && !item.text.includes("[Отменено]")) item.text = `<s>${item.text}</s> [Отменено]`;
+            showToast("Обновлено!"); saveState(); updateUI();
+        }
+    }
+
+    function setFilter(filter, el) {
+        currentFilter = filter; document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active'); updateUI();
+    }
+
+    function renderMonthPicker() {
+        let sel = document.getElementById('analytics-month');
+        let months = new Set();
+        let now = new Date();
+        months.add(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`);
+
+        state.history.forEach(h => {
+            if(h.ts) {
+                let d = new Date(h.ts);
+                months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`);
+            }
+        });
+
+        let arr = Array.from(months).sort().reverse();
+        let oldVal = sel.value;
+        sel.innerHTML = arr.map(m => {
+            let [y, mo] = m.split('-');
+            let dName = new Date(y, mo - 1).toLocaleString('ru-RU', {month: 'long', year: 'numeric'});
+            return `<option value="${m}">${dName}</option>`;
+        }).join('');
+        
+        if(arr.includes(oldVal)) sel.value = oldVal; else sel.value = arr[0];
+    }
+
+    function updateUI() {
+        document.getElementById('ui-name').innerText = state.profile.name;
+        document.getElementById('ui-age').innerText = state.profile.age;
+        document.getElementById('ui-height').innerText = state.profile.height;
+        document.getElementById('ui-weight').innerText = state.profile.weight;
+        document.getElementById('ui-lvl').innerText = state.lvl;
+        document.getElementById('ui-title').innerText = getTitle(state.lvl);
+        
+        let needed = state.lvl * 1000;
+        document.getElementById('ui-exp-bar').style.width = (state.exp / needed * 100) + '%';
+        document.getElementById('ui-exp-text').innerText = `${state.exp} / ${needed} XP`;
+
+        ['str', 'int', 'vit', 'agi'].forEach(stat => {
+            document.getElementById(`st-${stat}`).innerText = (state.stats[stat] / 60).toFixed(1);
+        });
+
+        document.getElementById('w-main-val').innerText = state.wallets.main.toLocaleString();
+        document.getElementById('w-resell-val').innerText = state.wallets.resell.toLocaleString();
+
+        let list = document.getElementById('resell-inventory-list');
+        if(state.resell.activeItems.length === 0) list.innerHTML = '<option value="" disabled selected>Склад пуст</option>';
+        else list.innerHTML = state.resell.activeItems.map(i => `<option value="${i.id}">${i.name} (${i.cost} ₽)</option>`).join('');
+
+        let invested = state.resell.activeItems.reduce((sum, item) => sum + item.cost, 0);
+        document.getElementById('resell-invested').innerText = invested.toLocaleString() + ' ₽';
+        let tpEl = document.getElementById('resell-net-profit');
+        tpEl.innerText = state.resell.totalProfit.toLocaleString() + ' ₽';
+        tpEl.className = state.resell.totalProfit >= 0 ? 'text-green' : 'text-red';
+        document.getElementById('resell-wins').innerText = state.resell.winDeals;
+        document.getElementById('resell-losses').innerText = state.resell.lossDeals;
+
+        let selectedMonth = document.getElementById('analytics-month').value;
+        let mIncome = 0; let mExpense = 0; let mResellProfit = 0; let mTransfers = 0;
+        
+        if(selectedMonth) {
+            let [y, m] = selectedMonth.split('-');
+            state.history.forEach(h => {
+                if(h.ts) {
+                    let d = new Date(h.ts);
+                    if(d.getFullYear() == y && (d.getMonth() + 1) == m && !h.text.includes("[Отменено]")) {
+                        if(h.wallet === 'main') {
+                            if(h.type === 'plus') mIncome += h.amount;
+                            if(h.type === 'minus') mExpense += h.amount;
+                        } else if(h.wallet === 'resell' && h.profitInfo) {
+                            mResellProfit += h.profitInfo.profit;
+                        } else if(h.wallet === 'transfer') {
+                            if(h.text.includes('в Перекуп')) mTransfers += h.amount;
+                            if(h.text.includes('из Перекупа')) mTransfers -= h.amount;
+                        }
+                    }
+                }
+            });
+        }
+        
+        document.getElementById('month-income').innerText = mIncome.toLocaleString() + ' ₽';
+        document.getElementById('month-expense').innerText = mExpense.toLocaleString() + ' ₽';
+        
+        let resellSign = mResellProfit > 0 ? '+' : '';
+        document.getElementById('month-resell').innerText = resellSign + mResellProfit.toLocaleString() + ' ₽';
+        
+        let mDiff = mIncome - mExpense + mResellProfit;
+        let mTotalEl = document.getElementById('month-total');
+        mTotalEl.innerText = mDiff.toLocaleString() + ' ₽';
+        mTotalEl.className = mDiff >= 0 ? 'text-green' : 'text-red';
+
+        document.getElementById('month-transfers').innerText = mTransfers.toLocaleString();
+
+        let totalAssets = state.assets.reduce((sum, a) => sum + a.value, 0);
+        let totalOweMe = state.debts.filter(d => d.type === 'owe_me').reduce((sum, d) => sum + d.amount, 0);
+        let totalIOwe = state.debts.filter(d => d.type === 'i_owe').reduce((sum, d) => sum + d.amount, 0);
+        let netWorth = state.wallets.main + state.wallets.resell + totalAssets + totalOweMe - totalIOwe;
+        document.getElementById('total-net-worth').innerText = netWorth.toLocaleString();
+
+        let aList = document.getElementById('assets-list');
+        if(state.assets.length === 0) aList.innerHTML = '<div style="color:#888; font-size:0.85rem;">Нет добавленных активов</div>';
+        else aList.innerHTML = state.assets.map(a => `
+            <div class="list-item">
+                <div class="item-info"><span style="font-weight:bold;">${a.name}</span></div>
+                <div style="font-weight:bold; color:var(--primary); margin-right: 15px;">${a.value.toLocaleString()} ₽</div>
+                <button class="edit-btn" onclick="updateAsset(${a.id})">✏️</button>
+                <button class="edit-btn" style="color:var(--red); margin-left:10px;" onclick="deleteAsset(${a.id})">🗑️</button>
+            </div>`).join('');
+
+        let dList = document.getElementById('debts-list');
+        if(state.debts.length === 0) dList.innerHTML = '<div style="color:#888; font-size:0.85rem;">Активных долгов нет</div>';
+        else dList.innerHTML = state.debts.map(d => {
+            let isOweMe = d.type === 'owe_me'; let color = isOweMe ? 'var(--green)' : 'var(--red)'; let label = isOweMe ? 'Мне должны' : 'Я должен';
+            return `
+            <div class="list-item" style="border-left: 3px solid ${color};">
+                <div class="item-info">
+                    <div style="font-size:0.75rem; color:${color}; font-weight:bold;">${label}</div>
+                    <div style="font-weight:bold;">${d.name}</div>
+                    <div style="font-size:0.75rem; color:var(--muted);">До: ${d.dueDate}</div>
+                </div>
+                <div style="font-weight:bold; font-size:1.1rem; margin-right: 15px;">${d.amount.toLocaleString()} ₽</div>
+                <button class="btn-outline" style="width:auto; padding:5px 10px; font-size:0.8rem; border-color:${color}; color:${color};" onclick="resolveDebt(${d.id})">Погасить</button>
+            </div>`;
+        }).join('');
+
+        let aGoals = document.getElementById('active-goals-list');
+        if(state.activeGoals.length === 0) aGoals.innerHTML = '<div style="color:#888; text-align:center; font-size:0.9rem;">Нет активных заданий</div>';
+        else aGoals.innerHTML = state.activeGoals.map(g => `
+            <div class="list-item">
+                <div class="item-info">
+                    <span style="font-size: 0.75rem; color: var(--gold); font-weight: bold; background: rgba(243, 156, 18, 0.1); padding: 2px 6px; border-radius: 4px;">Сложность: ${g.diff}</span><br>
+                    <span style="font-weight: 500; margin-top:4px; display:inline-block;">${g.text}</span>
+                </div>
+                <button class="btn-green" style="width:auto; padding:8px 15px; font-size:0.9rem;" onclick="confirmGoal(${g.id})">Сделал</button>
+            </div>`).join('');
+
+        let cGoals = document.getElementById('completed-goals-list');
+        if(state.completedGoals.length === 0) cGoals.innerHTML = '<div style="color:#888; text-align:center; font-size:0.9rem;">Архив пуст</div>';
+        else cGoals.innerHTML = state.completedGoals.map(g => `
+            <div class="list-item done">
+                <div class="item-info"><span>${g.text}</span></div>
+                <div style="font-size:0.8rem; font-weight:bold; color:var(--gold);">+${g.diff*15} XP</div>
+            </div>`).join('');
+
+        let hl = document.getElementById('history-list');
+        let fHistory = currentFilter !== 'all' ? state.history.filter(h => h.wallet === currentFilter) : state.history;
+        if(fHistory.length === 0) { hl.innerHTML = '<div style="text-align:center; color:#888; padding: 20px;">Пусто</div>'; } 
+        else {
+            hl.innerHTML = fHistory.map(h => {
+                let badge = h.wallet === 'main' ? 'Личн.' : (h.wallet === 'resell' ? 'Перекуп' : '🔄');
+                let colorClass = h.type === 'plus' ? 'val-plus' : (h.type === 'minus' ? 'val-minus' : 'val-plus');
+                let sign = h.type === 'plus' ? '+' : (h.type === 'minus' ? '-' : '');
+                
+                let extra = '';
+                if(h.profitInfo) {
+                    let pColor = h.profitInfo.isWin ? 'var(--green)' : 'var(--red)';
+                    extra = `<br><span style="font-size: 0.75rem; color: ${pColor}; font-weight: bold;">Маржа: ${h.profitInfo.profit > 0 ? '+' : ''}${h.profitInfo.profit} ₽</span>`;
+                }
+
+                return `
+                <div class="history-item ${h.amount === 0 ? 'h-zero' : ''}">
+                    <div class="h-info">
+                        <div>${h.text} <span style="font-size:0.7rem; color:var(--primary);">(${badge})</span></div>
+                        ${extra}
+                        <div class="h-date">${h.date}</div>
+                    </div>
+                    <div class="h-val ${colorClass}">${sign}${h.amount} ₽</div>
+                    ${(h.wallet !== 'transfer' && !h.profitInfo) ? `<div class="h-edit" onclick="editHistory(${h.id})">✏️</div>` : ''}
+                </div>`;
+            }).join('');
+        }
+    }
+
+    loadState();
+</script>
+
+</body>
+</html>

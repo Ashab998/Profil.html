@@ -15,7 +15,6 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; padding-top: 10px; }
 
-        /* Системные часы - Ультра прозрачные */
         .system-clock {
             position: fixed; top: 15px; right: 15px;
             background: rgba(255, 255, 255, 0.15); 
@@ -163,8 +162,14 @@
         <input type="number" id="act-time" placeholder="Потрачено минут (напр. 60)">
         <button onclick="logActivity()">Зафиксировать прогресс</button>
     </div>
+    
     <div class="card">
-        <h2>Статус Характеристик</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+            <h2 style="margin: 0; border: none; padding: 0;">Статус Характеристик</h2>
+            <select id="stats-period" onchange="updateUI()" style="width: auto; margin: 0; padding: 4px 8px; font-size: 0.85rem; border: none; font-weight: bold; background: transparent; color: var(--primary); cursor: pointer; outline: none;">
+                </select>
+        </div>
+        
         <div class="stats-grid">
             <div class="stat-box"><div class="stat-icon">💪</div><div class="stat-name">СИЛА</div><div class="stat-hours"><span id="st-str">0</span> ч</div></div>
             <div class="stat-box"><div class="stat-icon">🧠</div><div class="stat-name">УМ</div><div class="stat-hours"><span id="st-int">0</span> ч</div></div>
@@ -320,7 +325,6 @@
 </div>
 
 <script>
-    // Интеграция с Telegram Web App (разворачивает приложение на весь экран)
     if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
         tg.expand();
@@ -331,6 +335,7 @@
         lvl: 1, exp: 0,
         wallets: { main: 0, resell: 0 },
         stats: { str: 0, int: 0, vit: 0, agi: 0 },
+        activityLog: [],
         activeGoals: [], completedGoals: [],
         resell: { activeItems: [], totalProfit: 0, winDeals: 0, lossDeals: 0 },
         assets: [], debts: [], history: []
@@ -354,10 +359,12 @@
             state = { ...state, ...parsed };
             if(!state.assets) state.assets = []; if(!state.debts) state.debts = [];
             if(!state.resell) state.resell = { activeItems: [], totalProfit: 0, winDeals: 0, lossDeals: 0 };
+            if(!state.activityLog) state.activityLog = [];
         } else {
             document.getElementById('edit-profile-modal').style.display = 'flex';
         }
         renderMonthPicker();
+        renderStatsPeriodPicker();
         updateUI();
     }
 
@@ -392,11 +399,23 @@
     }
 
     function logActivity() {
-        let stat = document.getElementById('act-stat').value; let mins = parseInt(document.getElementById('act-time').value);
+        let stat = document.getElementById('act-stat').value; 
+        let mins = parseInt(document.getElementById('act-time').value);
+
         if(!mins || mins <= 0) return showToast("Укажи время!");
-        state.stats[stat] += mins; let expGain = mins * 10; state.exp += expGain; checkLevelUp();
-        showToast(`+${expGain} XP!`); document.getElementById('act-time').value = ''; saveState(); updateUI();
+
+        let ts = new Date().getTime();
+
+        state.stats[stat] += mins; 
+        state.activityLog.push({ id: Date.now(), stat: stat, mins: mins, ts: ts });
+
+        let expGain = mins * 10; state.exp += expGain; checkLevelUp();
+        showToast(`+${expGain} XP!`); 
+        document.getElementById('act-time').value = ''; 
+        renderStatsPeriodPicker();
+        saveState(); updateUI();
     }
+
     function checkLevelUp() {
         let needed = state.lvl * 1000;
         if(state.exp >= needed) { state.exp -= needed; state.lvl++; showToast(`🎉 УРОВЕНЬ ПОВЫШЕН ДО ${state.lvl}!`); }
@@ -618,10 +637,50 @@
         sel.innerHTML = arr.map(m => {
             let [y, mo] = m.split('-');
             let dName = new Date(y, mo - 1).toLocaleString('ru-RU', {month: 'long', year: 'numeric'});
+            dName = dName.charAt(0).toUpperCase() + dName.slice(1);
             return `<option value="${m}">${dName}</option>`;
         }).join('');
         
         if(arr.includes(oldVal)) sel.value = oldVal; else sel.value = arr[0];
+    }
+
+    function renderStatsPeriodPicker() {
+        let sel = document.getElementById('stats-period');
+        let oldVal = sel.value;
+        
+        let html = `
+            <option value="all">За всё время</option>
+            <option value="week">За последние 7 дней</option>
+            <option value="year">За этот год</option>
+        `;
+
+        let months = new Set();
+        let now = new Date();
+        months.add(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`);
+
+        if (state.activityLog) {
+            state.activityLog.forEach(log => {
+                if(log.ts) {
+                    let d = new Date(log.ts);
+                    months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`);
+                }
+            });
+        }
+
+        let arr = Array.from(months).sort().reverse();
+        arr.forEach(m => {
+            let [y, mo] = m.split('-');
+            let dName = new Date(y, mo - 1).toLocaleString('ru-RU', {month: 'long', year: 'numeric'});
+            dName = dName.charAt(0).toUpperCase() + dName.slice(1);
+            html += `<option value="${m}">${dName}</option>`;
+        });
+
+        sel.innerHTML = html;
+        if(oldVal && sel.querySelector(`option[value="${oldVal}"]`)) {
+            sel.value = oldVal;
+        } else {
+            sel.value = 'all';
+        }
     }
 
     function updateUI() {
@@ -636,8 +695,45 @@
         document.getElementById('ui-exp-bar').style.width = (state.exp / needed * 100) + '%';
         document.getElementById('ui-exp-text').innerText = `${state.exp} / ${needed} XP`;
 
+        // ФИЛЬТР ВРЕМЕНИ ДЛЯ ХАРАКТЕРИСТИК
+        let period = document.getElementById('stats-period').value;
+        let displayStats = { str: 0, int: 0, vit: 0, agi: 0 };
+        
+        if (period === 'all') {
+            displayStats = { ...state.stats };
+        } else {
+            let now = new Date().getTime();
+            let limit = 0;
+            let filterByMonth = false;
+            let fYear, fMonth;
+
+            if (period === 'week') limit = now - 7 * 24 * 3600 * 1000;
+            else if (period === 'year') limit = now - 365 * 24 * 3600 * 1000;
+            else if (period.includes('-')) {
+                filterByMonth = true;
+                [fYear, fMonth] = period.split('-');
+            }
+
+            if (state.activityLog) {
+                state.activityLog.forEach(log => {
+                    if (log.ts) {
+                        if (filterByMonth) {
+                            let d = new Date(log.ts);
+                            if(d.getFullYear() == fYear && (d.getMonth() + 1) == fMonth) {
+                                displayStats[log.stat] += log.mins;
+                            }
+                        } else {
+                            if (log.ts >= limit) {
+                                displayStats[log.stat] += log.mins;
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
         ['str', 'int', 'vit', 'agi'].forEach(stat => {
-            document.getElementById(`st-${stat}`).innerText = (state.stats[stat] / 60).toFixed(1);
+            document.getElementById(`st-${stat}`).innerText = (displayStats[stat] / 60).toFixed(1);
         });
 
         document.getElementById('w-main-val').innerText = state.wallets.main.toLocaleString();

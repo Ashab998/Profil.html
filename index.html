@@ -29,7 +29,7 @@
             background: var(--bg); 
             color: var(--text); 
             padding-bottom: 80px; 
-            padding-top: 10px; 
+            padding-top: 75px; /* Увеличен отступ, чтобы контент не прятался под панелью */
             -webkit-user-select: none; 
             user-select: none; 
         }
@@ -42,7 +42,7 @@
         /* Верхняя панель (Часы, Приватность, Настройки) */
         .top-panel {
             position: fixed; 
-            top: 15px; 
+            top: 65px; /* Сдвинули вниз от системной шторки Телеграма */
             right: 15px; 
             display: flex; 
             gap: 8px; 
@@ -329,7 +329,7 @@
         .filters { 
             display: flex; 
             gap: 5px; 
-            margin-bottom: 15px; 
+            margin-bottom: 10px; 
             overflow-x: auto; 
             padding-bottom: 5px; 
         }
@@ -410,7 +410,7 @@
 
         #toast { 
             position: fixed; 
-            top: 20px; 
+            top: 75px; /* Сдвинуто вниз вместе с панелью кнопок */
             left: 50%; 
             transform: translateX(-50%); 
             background: var(--secondary); 
@@ -465,7 +465,7 @@
 </div>
 
 <div id="tab-hero" class="tab-content active">
-    <div class="card" style="margin-top: 20px;">
+    <div class="card">
         <div class="profile-head">
             <div>
                 <div class="name" id="ui-name">Игрок</div>
@@ -504,7 +504,7 @@
 </div>
 
 <div id="tab-stats" class="tab-content">
-    <div class="card" style="margin-top: 20px;">
+    <div class="card">
         <h2>⏱️ Учет времени</h2>
         <select id="act-stat">
             <option value="str">💪 Сила (Спорт, Зал)</option>
@@ -549,7 +549,7 @@
 </div>
 
 <div id="tab-finance" class="tab-content">
-    <div class="wallets" style="margin-top: 20px;">
+    <div class="wallets">
         <div class="wallet w-main">
             <div style="font-size: 0.8rem; opacity: 0.8;">Личная Касса</div>
             <div class="w-amount"><span id="w-main-val">0</span> ₽</div>
@@ -637,7 +637,7 @@
             <option value="sell">📤 Продажа товара (Сделка)</option>
         </select>
         <div id="resell-buy-form">
-            <input type="text" id="resell-buy-item" placeholder="Название товара (Например: iPhone 14)">
+            <input type="text" id="resell-buy-item" placeholder="Название товара">
             <input type="number" id="resell-buy-amount" placeholder="Закупочная цена (₽)">
             <button class="btn-gold" onclick="buyResellItem()">Купить на склад</button>
         </div>
@@ -650,7 +650,7 @@
 </div>
 
 <div id="tab-assets" class="tab-content">
-    <div class="net-worth-box" style="margin-top: 20px;">
+    <div class="net-worth-box">
         <div style="font-size: 0.9rem; text-transform: uppercase; opacity: 0.9;">Реальный капитал (Net Worth)</div>
         <div class="net-worth-amount"><span id="total-net-worth">0</span> ₽</div>
         <div style="font-size: 0.75rem; margin-top: 10px; opacity: 0.8;">Кассы + Активы + Нам должны - Мы должны</div>
@@ -689,10 +689,10 @@
 </div>
 
 <div id="tab-history" class="tab-content">
-    <div class="card" style="margin-top: 20px;">
+    <div class="card">
         <h2>📜 История и Аналитика</h2>
         
-        <input type="text" id="history-search" class="search-box" placeholder="Поиск по истории..." oninput="updateUI()">
+        <input type="text" id="history-search" class="search-box" placeholder="Поиск по истории (напр. Бензин, Авто...)" oninput="updateUI()">
         <div id="search-stats" class="search-stats" style="display: none;">
             <div style="font-weight: bold; margin-bottom: 8px;">Итоги по запросу:</div>
             <div style="display: flex; justify-content: space-between;">
@@ -1130,7 +1130,6 @@
         showToast("Долг оформлен");
     }
 
-    // Восстановленная функция частичного погашения долга
     function resolveDebt(id) {
         let idx = state.debts.findIndex(d => d.id === id);
         if (idx > -1) {
